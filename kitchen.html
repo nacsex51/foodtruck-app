@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konyha – Rendelések</title>
+
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1a2e" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eaeaea;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       FEJLÉC
+    ============================================================ */
+    header {
+      background: #16213e;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #f39c12;   /* Narancs szín - szakácsos téma */
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      color: #f39c12;
+      letter-spacing: 1px;
+    }
+
+    /* Aktív (ÚJ) rendelések száma */
+    .new-count {
+      background: #f39c12;
+      color: #1a1a2e;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    /* ============================================================
+       RENDELÉSEK RÁCS ELRENDEZÉSE
+       Tablet-en több rendelés fér el egymás mellett.
+       auto-fill → automatikusan annyi oszlop amennyi elfér
+       minmax(280px, 1fr) → minimum 280px, maximum egyenlő rész
+    ============================================================ */
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      padding: 16px;
+    }
+
+    /* ============================================================
+       RENDELÉS KÁRTYA
+    ============================================================ */
+    .order-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid #e94560;        /* Piros keret = ÚJ rendelés */
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    /* ÚJ rendelés: pulzáló animáció hogy feltűnő legyen */
+    .order-card.new-order {
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    /* @keyframes: definiálja az animációt
+       A keret szín váltakozik piros és átlátszó között */
+    @keyframes pulse-border {
+      0%, 100% { border-color: #e94560; }
+      50%       { border-color: #ff6b6b88; }
+    }
+
+    /* KÉSZ rendelés: zöld, nem pulzál */
+    .order-card.done {
+      border-color: #2ecc71;
+      animation: none;
+      opacity: 0.55;
+    }
+
+    /* Kártya fejléc: sorszám + időbélyeg */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .queue-number {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #e94560;
+      line-height: 1;
+    }
+
+    .order-card.done .queue-number {
+      color: #2ecc71;
+    }
+
+    /* Mikor érkezett a rendelés */
+    .order-time {
+      font-size: 0.75rem;
+      color: #606080;
+      text-align: right;
+    }
+
+    /* Szeparátor vonal */
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2a4e;
+      margin: 10px 0;
+    }
+
+    /* ============================================================
+       ÉTEL SOROK A KÁRTYÁN
+    ============================================================ -->
+    A szakácsnak nagyobb betűvel, hogy távolabbról is olvasható legyen.
+    ============================================================ */
+    .item-row {
+      padding: 6px 0;
+      border-bottom: 1px solid #2a2a4e;
+    }
+
+    .item-row:last-child {
+      border-bottom: none;
+    }
+
+    .item-main {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    /* Mennyiség – nagy és jól látható */
+    .item-qty {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #f39c12;        /* Narancs = mennyiség */
+      min-width: 36px;
+    }
+
+    /* Étel neve */
+    .item-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Megjegyzés – kisebb, dőlt */
+    .item-note {
+      margin-top: 3px;
+      padding-left: 44px;    /* Igazodás a mennyiség oszlophoz */
+      color: #f39c12;
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    /* ============================================================
+       KÉSZ GOMB
+       Ez a gomb a legfontosabb a szakácsnak!
+       Nagy, zöld, könnyen megnyomható.
+    ============================================================ */
+    .done-btn {
+      width: 100%;
+      background: #27ae60;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: bold;
+      padding: 14px;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: background 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .done-btn:hover { background: #219a52; }
+
+    /* Ha a rendelés már kész, más gomb jelenik meg */
+    .undo-btn {
+      width: 100%;
+      background: #2a2a4e;
+      border: 1px solid #606080;
+      border-radius: 10px;
+      color: #a0a0b0;
+      font-size: 0.9rem;
+      padding: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+
+    .undo-btn:hover {
+      background: #3a3a6e;
+      color: white;
+    }
+
+    /* Ha nincs rendelés */
+    .empty-state {
+      grid-column: 1 / -1;   /* Teljes szélességű */
+      text-align: center;
+      color: #606080;
+      padding: 80px 20px;
+      font-size: 1rem;
+    }
+
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    /* ============================================================
+       HANGJELZÉS GOMB (a felhasználónak kell egyszer megnyomni)
+
+       MIÉRT KELL EZ?
+       A böngészők biztonsági okokból nem engedik a hanglejátszást
+       addig, amíg a felhasználó nem érintett meg valamit az oldalon.
+       Ez az "aktiváló" gomb oldja meg ezt a problémát.
+    ============================================================ */
+    .sound-toggle {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #0f3460;
+      border: 1px solid #1a4a7a;
+      border-radius: 50px;
+      color: #a0a0b0;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      z-index: 50;
+      transition: all 0.2s;
+    }
+
+    .sound-toggle.active {
+      background: #27ae60;
+      border-color: #2ecc71;
+      color: white;
+    }
+
+    /* Új rendelés értesítés banner */
+    .notification-bar {
+      display: none;
+      position: fixed;
+      top: 58px;
+      left: 0;
+      right: 0;
+      background: #e94560;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      z-index: 90;
+      animation: slide-down 0.3s ease;
+    }
+
+    @keyframes slide-down {
+      from { transform: translateY(-100%); }
+      to   { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FEJLÉC -->
+  <header>
+    <h1>🍳 KONYHA</h1>
+    <span class="new-count" id="newCount">0 új</span>
+  </header>
+
+  <!-- ÚJ RENDELÉS ÉRTESÍTÉS SÁV -->
+  <div class="notification-bar" id="notifBar">
+    🔔 Új rendelés érkezett!
+  </div>
+
+  <!-- RENDELÉSEK RÁCS -->
+  <div class="orders-grid" id="ordersGrid">
+    <div class="empty-state">
+      <div class="icon">🍽️</div>
+      <p>Még nincs rendelés.</p>
+    </div>
+  </div>
+
+  <!-- HANGJELZÉS AKTIVÁLÓ GOMB -->
+  <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">
+    🔕 Hangjelzés ki
+  </button>
+
+
+  <script src="firebase-config.js"></script>
+  <script>
+    // ============================================================
+    // ÁLLAPOT VÁLTOZÓK
+    // ============================================================
+
+    let orders = {};             // Beérkező rendelések Firebase-ből
+    let soundEnabled = false;    // Hangjelzés be/ki
+    let knownOrderIds = new Set(); // Már ismert rendelés ID-k (hanghoz kell)
+    let audioCtx = null;         // Web Audio API kontextus
+
+
+    // ============================================================
+    // HANGJELZÉS
+    //
+    // A Web Audio API segítségével programozottan generálunk hangot,
+    // nem kell hangfájl. Az OscillatorNode egy hullámot generál,
+    // a GainNode a hangerőt szabályozza.
+    // ============================================================
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById("soundToggle");
+
+      if (soundEnabled) {
+        // AudioContext létrehozása (csak kattintás után engedélyezett a böngészők által)
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        btn.textContent = "🔔 Hangjelzés be";
+        btn.classList.add("active");
+
+        // Egy teszt hang lejátszása, hogy a felhasználó tudja hogy működik
+        playBeep();
+      } else {
+        btn.textContent = "🔕 Hangjelzés ki";
+        btn.classList.remove("active");
+      }
+    }
+
+    function playBeep() {
+      if (!soundEnabled || !audioCtx) return;
+
+      // OscillatorNode: hanghullám generátor
+      const oscillator = audioCtx.createOscillator();
+      // GainNode: hangerő (0 = néma, 1 = teljes)
+      const gainNode = audioCtx.createGain();
+
+      // Kapcsoljuk össze: oscillator → gain → hangszóró
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      // Hang beállításai
+      oscillator.type = "sine";          // Szinusz hullám (lágy hang)
+      oscillator.frequency.value = 880;  // 880 Hz = A5 hang (kellemes csipogó)
+      gainNode.gain.value = 0.4;         // 40%-os hangerő
+
+      // Hang lejátszása: most-tól most+0.2 másodpercig
+      const now = audioCtx.currentTime;
+      oscillator.start(now);
+      oscillator.stop(now + 0.2);  // 200 milliszekundum
+
+      // Kicsi szünet, majd egy második csipogás
+      setTimeout(() => {
+        if (!soundEnabled || !audioCtx) return;
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = "sine";
+        osc2.frequency.value = 1100;  // Magasabb hang a második csipogáshoz
+        gain2.gain.value = 0.4;
+        const t = audioCtx.currentTime;
+        osc2.start(t);
+        osc2.stop(t + 0.2);
+      }, 300);  // 300ms szünet a két csipogás között
+    }
+
+
+    // ============================================================
+    // RENDELÉS IDŐ FORMÁZÁSA
+    // timestamp: milliszekundum (pl. 1718000000000)
+    // Visszaad: "14:32" formátumú szöveget
+    // ============================================================
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const h = String(date.getHours()).padStart(2, "0");    // pl. "09"
+      const m = String(date.getMinutes()).padStart(2, "0");  // pl. "05"
+      return `${h}:${m}`;
+    }
+
+
+    // ============================================================
+    // RENDELÉSEK MEGJELENÍTÉSE
+    // ============================================================
+    function renderOrders() {
+      const container = document.getElementById("ordersGrid");
+
+      const orderKeys = Object.keys(orders);
+
+      // Új rendelések száma (status === "new")
+      const newOrders = orderKeys.filter(id => orders[id].status === "new");
+      document.getElementById("newCount").textContent = newOrders.length + " új";
+
+      if (orderKeys.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🍽️</div>
+            <p>Még nincs rendelés.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Rendezés: ÚJ rendelések elöl, azon belül legrégebbi először
+      // (hogy a szakács sorban tudja őket elkészíteni)
+      orderKeys.sort((a, b) => {
+        const aNew = orders[a].status === "new";
+        const bNew = orders[b].status === "new";
+        if (aNew && !bNew) return -1;   // a előre
+        if (!aNew && bNew) return 1;    // b előre
+        return orders[a].timestamp - orders[b].timestamp;  // régebbi előre
+      });
+
+      container.innerHTML = orderKeys.map(id => {
+        const order = orders[id];
+        const isDone = order.status === "done";
+
+        return `
+          <div class="order-card ${isDone ? 'done' : 'new-order'}">
+            <div class="card-header">
+              <div class="queue-number">#${order.queue}</div>
+              <div class="order-time">
+                ${formatTime(order.timestamp)}<br>
+                <span style="color:${isDone ? '#2ecc71' : '#e94560'};font-weight:bold;">
+                  ${isDone ? '✅ KÉSZ' : '🔴 ÚJ'}
+                </span>
+              </div>
+            </div>
+
+            <hr class="divider" />
+
+            <!-- Étel sorok -->
+            ${order.items.map(item => `
+              <div class="item-row">
+                <div class="item-main">
+                  <span class="item-qty">${item.qty}×</span>
+                  <span class="item-name">${item.name}</span>
+                </div>
+                ${item.note
+                  ? `<div class="item-note">📝 ${item.note}</div>`
+                  : ''
+                }
+              </div>
+            `).join("")}
+
+            <!-- Kész / Visszaállít gomb -->
+            ${isDone
+              ? `<button class="undo-btn" onclick="setStatus('${id}', 'new')">
+                   ↩️ Visszaállítás újra
+                 </button>`
+              : `<button class="done-btn" onclick="setStatus('${id}', 'done')">
+                   ✅ KÉSZ
+                 </button>`
+            }
+          </div>
+        `;
+      }).join("");
+    }
+
+
+    // ============================================================
+    // ÁLLAPOT VÁLTOZTATÁSA (Új ↔ Kész)
+    // orderId: a rendelés Firebase azonosítója
+    // newStatus: "new" vagy "done"
+    //
+    // update() → csak a megadott mezőket frissíti, a többit meghagyja
+    // ============================================================
+    function setStatus(orderId, newStatus) {
+      ordersRef.child(orderId).update({ status: newStatus });
+    }
+
+
+    // ============================================================
+    // ÉRTESÍTŐ SÁV MEGJELENÍTÉSE
+    // ============================================================
+    function showNotification() {
+      const bar = document.getElementById("notifBar");
+      bar.style.display = "block";
+
+      // 3 másodperc után automatikusan eltűnik
+      setTimeout(() => {
+        bar.style.display = "none";
+      }, 3000);
+    }
+
+
+    // ============================================================
+    // VALÓS IDEJŰ SZINKRON
+    //
+    // Ugyanúgy mint a pénztáros oldalon, folyamatosan figyeli
+    // az adatbázist. Ha változás van, automatikusan frissül a nézet.
+    //
+    // ITT TÖRTÉNIK A HANGJELZÉS LOGIKÁJA:
+    // - Az első betöltésnél eltároljuk az összes rendelés ID-ját
+    // - Minden következő frissítésnél megnézzük, van-e ÚJ ID
+    // - Ha igen → hangjelzés + értesítő sáv
+    // ============================================================
+    let isFirstLoad = true;  // Az első betöltésnél ne szóljon
+
+    ordersRef.on("value", (snapshot) => {
+      const newData = snapshot.val() || {};
+
+      if (isFirstLoad) {
+        // Első betöltés: csak eltároljuk az ID-kat, nem szólunk
+        Object.keys(newData).forEach(id => knownOrderIds.add(id));
+        isFirstLoad = false;
+      } else {
+        // Következő frissítések: keresünk új rendeléseket
+        const incomingIds = Object.keys(newData);
+        const hasNewOrder = incomingIds.some(id => !knownOrderIds.has(id));
+
+        if (hasNewOrder) {
+          // Van új rendelés!
+          incomingIds.forEach(id => knownOrderIds.add(id));
+          playBeep();           // Hangjelzés
+          showNotification();   // Értesítő sáv
+        }
+      }
+
+      orders = newData;
+      renderOrders();
+    });
+  </script>
+</body>
+</html>

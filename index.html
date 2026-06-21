@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pénztár – Rendelésfelvitel</title>
+
+  <!--
+    PWA beállítások: ezek teszik lehetővé, hogy a böngészőből
+    "telepítsük" az alkalmazást, és teljes képernyőn fusson.
+  -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1a1a2e" />
+
+  <!--
+    Firebase SDK betöltése (a Google szervereiről)
+    Ez a három sor tölti be a Firebase könyvtárakat,
+    amik nélkül nem tudna szinkronizálni a két tablet.
+  -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* ============================================================
+       ALAP STÍLUSOK
+       A * minden HTML elemre vonatkozik.
+       box-sizing: border-box → a padding beleszámít az elemek méretébe
+    ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;   /* Sötétkék háttér */
+      color: #eaeaea;         /* Világosszürke szöveg */
+      min-height: 100vh;      /* Teljes képernyő magasság */
+    }
+
+    /* Fejléc sáv tetején */
+    header {
+      background: #16213e;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #e94560;
+      position: sticky;      /* Görgetésnél is látható marad */
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      color: #e94560;         /* Piros-narancs szín */
+      letter-spacing: 1px;
+    }
+
+    /* Az aktív rendelések száma a fejlécben */
+    .order-count {
+      background: #e94560;
+      color: white;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    /* ============================================================
+       FŐ ELRENDEZÉS: bal oldal (felvitel) + jobb oldal (lista)
+       display: flex → egymás mellé rakja a két panelt
+    ============================================================ */
+    .main-layout {
+      display: flex;
+      height: calc(100vh - 58px);  /* Teljes magasság mínusz fejléc */
+    }
+
+    /* Bal panel: rendelés összerakása */
+    .left-panel {
+      width: 55%;
+      padding: 16px;
+      overflow-y: auto;       /* Görgethetővé teszi ha sok az étel */
+      border-right: 2px solid #16213e;
+    }
+
+    /* Jobb panel: aktív rendelések listája */
+    .right-panel {
+      width: 45%;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* ============================================================
+       SORSZÁM ÉS MEGJEGYZÉS MEZŐ
+    ============================================================ */
+    .order-header {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .order-header label {
+      font-size: 0.8rem;
+      color: #a0a0b0;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* input[type="number"] → csak szám beviteli mező */
+    .queue-input {
+      width: 100%;
+      background: #0f3460;
+      border: 1px solid #e94560;
+      border-radius: 6px;
+      color: white;
+      font-size: 1.4rem;
+      font-weight: bold;
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    /* ============================================================
+       ÉTEL KATEGÓRIÁK ÉS GOMBOK
+    ============================================================ */
+    .category-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #a0a0b0;
+      margin: 14px 0 8px;
+    }
+
+    /* Az ételek gombjai - rács elrendezésben */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);  /* 2 oszlopos rács */
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    /* Egy étel gomb */
+    .menu-btn {
+      background: #0f3460;
+      border: 1px solid #1a4a7a;
+      border-radius: 8px;
+      color: #eaeaea;
+      padding: 12px 8px;
+      font-size: 0.9rem;
+      cursor: pointer;        /* Kézzel mutató egér kurzor */
+      transition: all 0.15s;  /* Sima átmenet kattintáskor */
+      text-align: center;
+    }
+
+    .menu-btn:hover {
+      background: #1a5a9a;
+      border-color: #e94560;
+    }
+
+    /* Ha az étel már a kosárban van, kiemelve jelenik meg */
+    .menu-btn.in-cart {
+      background: #e94560;
+      border-color: #ff6b6b;
+      color: white;
+    }
+
+    /* ============================================================
+       KOSÁR (az összerakott rendelés)
+    ============================================================ */
+    .cart-section {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 14px;
+    }
+
+    .cart-section h3 {
+      font-size: 0.85rem;
+      color: #e94560;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Egy kosár tétel */
+    .cart-item {
+      background: #0f3460;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .cart-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .cart-item-name {
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    /* Törlés gomb egy kosár tételnél */
+    .remove-item-btn {
+      background: none;
+      border: none;
+      color: #e94560;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0 4px;
+    }
+
+    /* Megjegyzés beviteli mező az étel alatt */
+    .item-note {
+      width: 100%;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 6px;
+      color: #eaeaea;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      resize: none;           /* Ne lehessen átméretezni */
+      height: 42px;
+    }
+
+    .item-note::placeholder {
+      color: #606080;
+    }
+
+    /* Mennyiség számláló (+/-) */
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .qty-btn {
+      background: #1a4a7a;
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;   /* Kerek gomb */
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-display {
+      font-weight: bold;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* ============================================================
+       RENDELÉS KÜLDÉSE GOMB
+    ============================================================ */
+    .send-btn {
+      width: 100%;
+      background: #e94560;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 16px;
+      cursor: pointer;
+      margin-top: 14px;
+      transition: background 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .send-btn:hover { background: #c73652; }
+    .send-btn:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+
+    /* ============================================================
+       RENDELÉSEK LISTÁJA (jobb panel)
+    ============================================================ */
+    .panel-title {
+      font-size: 0.85rem;
+      color: #a0a0b0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    /* Egy rendelés kártya */
+    .order-card {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #e94560;  /* Piros bal szegély = ÚJ */
+      position: relative;
+    }
+
+    /* Kész rendelésnél zöld szegély */
+    .order-card.done {
+      border-left-color: #2ecc71;
+      opacity: 0.6;           /* Kicsit elhalványul ha kész */
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .order-queue {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #e94560;
+    }
+
+    .order-card.done .order-queue {
+      color: #2ecc71;
+    }
+
+    .order-status {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+
+    .status-new {
+      background: #e94560;
+      color: white;
+    }
+
+    .status-done {
+      background: #2ecc71;
+      color: #1a1a2e;
+    }
+
+    /* Egy étel sor a rendelésen belül */
+    .order-item-line {
+      font-size: 0.85rem;
+      padding: 4px 0;
+      border-bottom: 1px solid #2a2a4e;
+    }
+
+    .order-item-line:last-child {
+      border-bottom: none;
+    }
+
+    .order-item-note {
+      color: #a0a0b0;
+      font-size: 0.78rem;
+      font-style: italic;
+    }
+
+    /* Törlés gomb a rendelés kártyán */
+    .delete-btn {
+      background: none;
+      border: 1px solid #e94560;
+      border-radius: 6px;
+      color: #e94560;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s;
+    }
+
+    .delete-btn:hover {
+      background: #e94560;
+      color: white;
+    }
+
+    /* Ha nincs rendelés */
+    .empty-state {
+      text-align: center;
+      color: #606080;
+      padding: 40px 20px;
+      font-size: 0.9rem;
+    }
+
+    /* ============================================================
+       NAPI STATISZTIKA GOMB
+    ============================================================ */
+    .stats-btn {
+      width: 100%;
+      background: #0f3460;
+      border: 1px solid #1a4a7a;
+      border-radius: 8px;
+      color: #a0a0b0;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: 10px;
+      transition: all 0.15s;
+    }
+
+    .stats-btn:hover {
+      border-color: #e94560;
+      color: white;
+    }
+
+    /* ============================================================
+       MODAL (felugró ablak) - Statisztikához
+    ============================================================ */
+    .modal-overlay {
+      display: none;          /* Alapesetben rejtett */
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* display: flex → láthatóvá teszi a modalt */
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #16213e;
+      border-radius: 14px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #e94560;
+    }
+
+    .modal h2 {
+      color: #e94560;
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #2a2a4e;
+      font-size: 0.9rem;
+    }
+
+    .stat-row:last-child { border-bottom: none; }
+    .stat-value { font-weight: bold; color: #e94560; }
+
+    .modal-close {
+      width: 100%;
+      background: #e94560;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      padding: 12px;
+      cursor: pointer;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FEJLÉC -->
+  <header>
+    <h1>🍔 PÉNZTÁR</h1>
+    <span class="order-count" id="orderCount">0 rendelés</span>
+  </header>
+
+  <!-- FŐ ELRENDEZÉS -->
+  <div class="main-layout">
+
+    <!-- ============================================================
+         BAL PANEL: ÚJ RENDELÉS ÖSSZERAKÁSA
+    ============================================================ -->
+    <div class="left-panel">
+
+      <!-- Sorszám megadása (a csipogóhoz igazodva) -->
+      <div class="order-header">
+        <label>SORSZÁM (csipogó száma)</label>
+        <input
+          type="number"
+          class="queue-input"
+          id="queueNumber"
+          placeholder="pl. 42"
+          min="1"
+          max="999"
+        />
+      </div>
+
+      <!--
+        MENÜ GOMBOK
+        =============================================================
+        ITT KELL MAJD MÓDOSÍTANI A SAJÁT MENÜDDEL!
+
+        Struktúra:
+        - <p class="category-title"> → kategória neve
+        - <div class="menu-grid"> → gombokhoz rács elrendezés
+        - <button class="menu-btn" onclick="addToCart('Étel neve')">
+            Étel neve
+          </button>
+
+        Annyi gombot és kategóriát csinálhatsz, amennyit szeretnél.
+        =============================================================
+      -->
+
+      <p class="category-title">🍔 Fő fogások</p>
+      <div class="menu-grid">
+        <button class="menu-btn" onclick="addToCart('Hamburger')">Hamburger</button>
+        <button class="menu-btn" onclick="addToCart('Cheeseburger')">Cheeseburger</button>
+        <button class="menu-btn" onclick="addToCart('Hotdog')">Hotdog</button>
+        <button class="menu-btn" onclick="addToCart('Wrap')">Wrap</button>
+      </div>
+
+      <p class="category-title">🍟 Köretek</p>
+      <div class="menu-grid">
+        <button class="menu-btn" onclick="addToCart('Sült krumpli')">Sült krumpli</button>
+        <button class="menu-btn" onclick="addToCart('Édes burgonya')">Édes burgonya</button>
+        <button class="menu-btn" onclick="addToCart('Coleslaw')">Coleslaw</button>
+      </div>
+
+      <p class="category-title">🥤 Italok</p>
+      <div class="menu-grid">
+        <button class="menu-btn" onclick="addToCart('Cola')">Cola</button>
+        <button class="menu-btn" onclick="addToCart('Víz')">Víz</button>
+        <button class="menu-btn" onclick="addToCart('Limonádé')">Limonádé</button>
+      </div>
+
+      <!-- KOSÁR: az összerakott rendelés -->
+      <div class="cart-section">
+        <h3>🛒 Aktuális rendelés</h3>
+        <!-- ide kerülnek a kosár tételek JavaScript-ből -->
+        <div id="cartItems"></div>
+      </div>
+
+      <!-- Küldés gomb -->
+      <button class="send-btn" id="sendBtn" onclick="sendOrder()">
+        📤 RENDELÉS KÜLDÉSE
+      </button>
+
+    </div>
+
+    <!-- ============================================================
+         JOBB PANEL: AKTÍV RENDELÉSEK LISTÁJA
+    ============================================================ -->
+    <div class="right-panel">
+      <p class="panel-title">📋 Aktív rendelések</p>
+
+      <!-- ide kerülnek a rendelés kártyák JavaScript-ből -->
+      <div id="ordersList"></div>
+
+      <!-- Napi statisztika gomb -->
+      <button class="stats-btn" onclick="showStats()">
+        📊 Napi statisztika megtekintése
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       STATISZTIKA MODAL (felugró ablak)
+  ============================================================ -->
+  <div class="modal-overlay" id="statsModal">
+    <div class="modal">
+      <h2>📊 Mai nap statisztikája</h2>
+      <div id="statsContent"></div>
+      <button class="modal-close" onclick="closeStats()">Bezárás</button>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       JAVASCRIPT – Az alkalmazás logikája
+  ============================================================ -->
+  <script src="firebase-config.js"></script>
+  <script>
+    // ============================================================
+    // ÁLLAPOT (state) – az alkalmazás "memóriája"
+    // Ezek a változók tárolják az aktuális adatokat.
+    // ============================================================
+
+    // A kosár: egy tömb, amiben az ételek vannak
+    // Pl.: [{ name: "Hamburger", qty: 1, note: "hagyma nélkül" }]
+    let cart = [];
+
+    // A Firebase-ből beérkező rendelések
+    // Pl.: { "-Nab123": { queue: 42, items: [...], status: "new" } }
+    let orders = {};
+
+
+    // ============================================================
+    // ÉTEL HOZZÁADÁSA A KOSÁRHOZ
+    // Ezt hívja meg minden menü gomb kattintáskor.
+    // ============================================================
+    function addToCart(itemName) {
+      // Megnézzük, hogy az étel már szerepel-e a kosárban
+      const existing = cart.find(i => i.name === itemName);
+
+      if (existing) {
+        // Ha már benne van, növeljük a mennyiségét
+        existing.qty += 1;
+      } else {
+        // Ha még nincs benne, hozzáadjuk
+        cart.push({ name: itemName, qty: 1, note: "" });
+      }
+
+      // Frissítjük a kosár megjelenítést
+      renderCart();
+    }
+
+
+    // ============================================================
+    // KOSÁR MEGJELENÍTÉSE
+    // Ez rajzolja ki a képernyőre az aktuális kosár tartalmát.
+    // ============================================================
+    function renderCart() {
+      const container = document.getElementById("cartItems");
+
+      // Ha üres a kosár
+      if (cart.length === 0) {
+        container.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs tétel a kosárban.</p>';
+        // Menü gombok visszaállítása (egyik sem kiemelve)
+        document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("in-cart"));
+        return;
+      }
+
+      // Kiemeljük azokat a menü gombokat, amik a kosárban vannak
+      document.querySelectorAll(".menu-btn").forEach(btn => {
+        const inCart = cart.some(i => i.name === btn.textContent.trim());
+        btn.classList.toggle("in-cart", inCart);
+      });
+
+      // Minden kosár tételt kirajtolunk
+      // cart.map() → végigmegy a tömbön és minden elemből HTML-t csinál
+      // .join("") → az elemeket összefűzi egy szöveggé
+      container.innerHTML = cart.map((item, index) => `
+        <div class="cart-item">
+          <div class="cart-item-header">
+            <span class="cart-item-name">${item.name}</span>
+            <button class="remove-item-btn" onclick="removeFromCart(${index})">✕</button>
+          </div>
+
+          <!-- Mennyiség +/- kezelő -->
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="changeQty(${index}, -1)">−</button>
+            <span class="qty-display">${item.qty} db</span>
+            <button class="qty-btn" onclick="changeQty(${index}, +1)">+</button>
+          </div>
+
+          <!-- Megjegyzés mező
+               oninput → azonnal menti amit beírunk (nem kell Enter)
+               A ${index} megmondja, melyik tételhez tartozik a megjegyzés -->
+          <textarea
+            class="item-note"
+            placeholder="Megjegyzés (pl. hagyma nélkül)..."
+            oninput="updateNote(${index}, this.value)"
+          >${item.note}</textarea>
+        </div>
+      `).join("");
+    }
+
+
+    // ============================================================
+    // MENNYISÉG VÁLTOZTATÁSA (+/-)
+    // index: melyik tételt változtatjuk (0, 1, 2, ...)
+    // delta: +1 vagy -1
+    // ============================================================
+    function changeQty(index, delta) {
+      cart[index].qty += delta;
+
+      // Ha 0-ra csökkenne, töröljük a tételt
+      if (cart[index].qty <= 0) {
+        removeFromCart(index);
+      } else {
+        renderCart();
+      }
+    }
+
+
+    // ============================================================
+    // MEGJEGYZÉS FRISSÍTÉSE
+    // index: melyik tétel megjegyzése változott
+    // value: az új szöveg
+    // ============================================================
+    function updateNote(index, value) {
+      cart[index].note = value;
+      // Nem kell renderCart() mert a szöveg már ott van a mezőben
+    }
+
+
+    // ============================================================
+    // TÉTEL ELTÁVOLÍTÁSA A KOSÁRBÓL
+    // splice(index, 1) → kitöröl 1 elemet az adott pozícióból
+    // ============================================================
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      renderCart();
+    }
+
+
+    // ============================================================
+    // RENDELÉS ELKÜLDÉSE FIREBASE-BE
+    // ============================================================
+    function sendOrder() {
+      // Ellenőrzések: sorszám és kosár megléte
+      const queueInput = document.getElementById("queueNumber");
+      const queueNumber = parseInt(queueInput.value);
+
+      if (!queueNumber || queueNumber < 1) {
+        alert("Kérlek add meg a sorszámot (csipogó számát)!");
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert("A kosár üres, adj hozzá ételeket!");
+        return;
+      }
+
+      // Rendelés objektum összeállítása
+      const order = {
+        queue: queueNumber,       // Sorszám
+        items: cart,              // Ételek listája
+        status: "new",            // Állapot: "new" = Új
+        timestamp: Date.now()     // Időbélyeg: hány milliszekundum telt el 1970 jan 1 óta
+      };
+
+      // Küldés Firebase-be
+      // push() → automatikusan egyedi azonosítót generál (pl. "-Nab123xYz")
+      ordersRef.push(order)
+        .then(() => {
+          // Sikeres küldés után:
+          cart = [];                   // Kosár kiürítése
+          queueInput.value = "";       // Sorszám mező törlése
+          renderCart();                // Kosár újrarajzolása (üres lesz)
+        })
+        .catch(err => {
+          alert("Hiba a küldés során: " + err.message);
+        });
+    }
+
+
+    // ============================================================
+    // RENDELÉS TÖRLÉSE
+    // orderId: a Firebase által generált egyedi azonosító (pl. "-Nab123")
+    // ============================================================
+    function deleteOrder(orderId) {
+      // Megerősítés kérése törlés előtt
+      if (!confirm("Biztosan törli ezt a rendelést?")) return;
+
+      // remove() → törli az adott rendelést Firebase-ből
+      // Ez automatikusan szinkronizálódik a szakácsos tabletre is!
+      ordersRef.child(orderId).remove();
+    }
+
+
+    // ============================================================
+    // RENDELÉSEK LISTÁJÁNAK MEGJELENÍTÉSE (jobb panel)
+    // ============================================================
+    function renderOrders() {
+      const container = document.getElementById("ordersList");
+
+      // Az orders objektumból kulcsokat (ID-kat) kivesszük
+      const orderKeys = Object.keys(orders);
+
+      // Számlálót frissítjük a fejlécben
+      document.getElementById("orderCount").textContent =
+        orderKeys.length + " rendelés";
+
+      if (orderKeys.length === 0) {
+        container.innerHTML = '<p class="empty-state">Jelenleg nincs aktív rendelés.</p>';
+        return;
+      }
+
+      // Rendezés: legújabb elöl (timestamp alapján)
+      orderKeys.sort((a, b) => orders[b].timestamp - orders[a].timestamp);
+
+      container.innerHTML = orderKeys.map(id => {
+        const order = orders[id];
+        const isDone = order.status === "done";
+
+        return `
+          <div class="order-card ${isDone ? 'done' : ''}">
+            <div class="order-card-header">
+              <span class="order-queue">#${order.queue}</span>
+              <span class="order-status ${isDone ? 'status-done' : 'status-new'}">
+                ${isDone ? '✅ KÉSZ' : '🔴 ÚJ'}
+              </span>
+            </div>
+
+            <!-- Ételek listája a rendelésen belül -->
+            ${order.items.map(item => `
+              <div class="order-item-line">
+                <strong>${item.qty}× ${item.name}</strong>
+                ${item.note ? `<div class="order-item-note">📝 ${item.note}</div>` : ''}
+              </div>
+            `).join("")}
+
+            <!-- Törlés gomb (csak a pénztáros tableten van) -->
+            <button class="delete-btn" onclick="deleteOrder('${id}')">
+              🗑️ Rendelés törlése
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+
+    // ============================================================
+    // VALÓS IDEJŰ SZINKRON BEÁLLÍTÁSA
+    //
+    // Az "on('value', ...)" folyamatosan "figyeli" a Firebase-t.
+    // Minden változáskor (új rendelés, törlés, státusz változás)
+    // automatikusan lefut a callback függvény, és frissíti a képernyőt.
+    // Ez az, ami miatt a két tablet szinkronban van!
+    // ============================================================
+    ordersRef.on("value", (snapshot) => {
+      // snapshot.val() → az adatbázisból jövő adat
+      orders = snapshot.val() || {};  // Ha null (üres), legyen üres objektum
+      renderOrders();
+    });
+
+
+    // ============================================================
+    // NAPI STATISZTIKA
+    // ============================================================
+    function showStats() {
+      // Ma éjfél időbélyege (a nap kezdete)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);  // 00:00:00 re állítja az időt
+      const todayStartTs = todayStart.getTime();  // milliszekundumban
+
+      // Összes rendelés végigfutása
+      const allOrders = Object.values(orders);
+
+      // Csak a mai rendelések
+      const todayOrders = allOrders.filter(o => o.timestamp >= todayStartTs);
+
+      // Ételszámlálás: melyikből mennyi fogyott ma
+      const itemCounts = {};
+      todayOrders.forEach(order => {
+        order.items.forEach(item => {
+          // Ha még nincs ilyen étel a számlálóban, hozzáadjuk
+          itemCounts[item.name] = (itemCounts[item.name] || 0) + item.qty;
+        });
+      });
+
+      // Rendezés: legtöbbet rendelt étel előre
+      const sorted = Object.entries(itemCounts)
+        .sort((a, b) => b[1] - a[1]);  // b[1] - a[1] → csökkenő sorrend
+
+      // HTML összeállítása a modalhoz
+      let html = `
+        <div class="stat-row">
+          <span>Összes rendelés ma:</span>
+          <span class="stat-value">${todayOrders.length} db</span>
+        </div>
+        <div class="stat-row">
+          <span>Ebből teljesített:</span>
+          <span class="stat-value">${todayOrders.filter(o => o.status === "done").length} db</span>
+        </div>
+        <p style="color:#a0a0b0;font-size:0.75rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">
+          Eladott ételek
+        </p>
+      `;
+
+      if (sorted.length === 0) {
+        html += '<p style="color:#606080;font-size:0.85rem;">Ma még nincs rendelés.</p>';
+      } else {
+        sorted.forEach(([name, count]) => {
+          html += `
+            <div class="stat-row">
+              <span>${name}</span>
+              <span class="stat-value">${count} db</span>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById("statsContent").innerHTML = html;
+      document.getElementById("statsModal").classList.add("open");
+    }
+
+    function closeStats() {
+      document.getElementById("statsModal").classList.remove("open");
+    }
+
+    // Kezdeti renderelés (oldal betöltésekor üres kosarat jelenít meg)
+    renderCart();
+  </script>
+</body>
+</html>

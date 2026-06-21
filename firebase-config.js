@@ -1,0 +1,24 @@
+// ============================================================
+// FIREBASE KONFIGURÁCIÓ – FoodtrusckSU2 projekt
+// ============================================================
+// Ezek a te saját Firebase adataid. Ne add meg senkinek!
+// ============================================================
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBSx3t2hV3befjFHshz6ph0dPHeWGor58E",
+  authDomain: "foodtruscksu2.firebaseapp.com",
+  databaseURL: "https://foodtruscksu2-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "foodtruscksu2",
+  storageBucket: "foodtruscksu2.firebasestorage.app",
+  messagingSenderId: "18381721367",
+  appId: "1:18381721367:web:755a15d7934e68faab3152"
+};
+
+// Firebase inicializálás (elindítás)
+firebase.initializeApp(firebaseConfig);
+
+// Adatbázis referencia – ezen keresztül olvasunk/írunk adatot
+const db = firebase.database();
+
+// A rendelések tárolási helye az adatbázisban
+const ordersRef = db.ref("orders");
