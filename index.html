@@ -143,6 +143,22 @@
             color: white;
         }
 
+        /* Foglalt pager gomb - szürke, nem kattintható
+           opacity: 0.4 → áttetsző, hogy látszódjon hogy nem elérhető
+           cursor: not-allowed → tiltott kurzor ráhúzáskor */
+        .pager-btn.occupied {
+            background: #2a2a2a;
+            border-color: #444;
+            color: #555;
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .pager-btn.occupied:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
         /* Kiválasztott sorszám megjelenítése */
         .selected-queue {
             margin-top: 8px;
@@ -380,7 +396,7 @@
 
         /* Egy étel sor a rendelésen belül */
         .order-item-line {
-            font-size: 0.85rem;
+            font-size: 1.2rem;
             padding: 4px 0;
             border-bottom: 1px solid #2a2a4e;
         }
@@ -402,7 +418,7 @@
             border-radius: 6px;
             color: #e94560;
             padding: 4px 10px;
-            font-size: 0.8rem;
+            font-size: 1.2rem;
             cursor: pointer;
             margin-top: 8px;
             transition: all 0.15s;
@@ -544,12 +560,15 @@
           =============================================================
         -->
 
-        <p class="category-title">🍔 Fő fogások</p>
+        <p class="category-title">🍔 Kaják</p>
         <div class="menu-grid">
-            <button class="menu-btn" onclick="addToCart('Hamburger')">Hamburger</button>
+            <button class="menu-btn" onclick="addToCart('Dupli Cheeseburger')">Dupli Cheeseburger</button>
             <button class="menu-btn" onclick="addToCart('Cheeseburger')">Cheeseburger</button>
-            <button class="menu-btn" onclick="addToCart('Hotdog')">Hotdog</button>
-            <button class="menu-btn" onclick="addToCart('Wrap')">Wrap</button>
+            <button class="menu-btn" onclick="addToCart('Gyros Pita')">Gyros Pita</button>
+            <button class="menu-btn" onclick="addToCart('Gyros Box')">Gyros Box</button>
+            <button class="menu-btn" onclick="addToCart('Pulled Pork')">Pulled Pork</button>
+            <button class="menu-btn" onclick="addToCart('Pulled Chicken')">Pulled Chicken</button>
+            <button class="menu-btn" onclick="addToCart('Pljeskavica')">Pljeskavica</button>
         </div>
 
         <!-- KOSÁR: az összerakott rendelés -->
@@ -617,14 +636,38 @@
     function renderPagerButtons() {
         const grid = document.querySelector(".pager-grid");
 
+        // Összegyűjtjük a FOGLALT pager számokat az aktív rendelésekből.
+        // Object.values(orders) → az orders objektum értékeit adja vissza tömbként
+        // .map(o => o.queue) → minden rendelésből csak a pager számát vesszük ki
+        // Eredmény pl.: [3, 7, 12] ha ezek a pagerek ki vannak adva
+        const occupiedPagers = Object.values(orders).map(o => o.queue);
+
         // Array.from({length: 16}, (_, i) => i + 1) → [1, 2, 3, ..., 16]
         grid.innerHTML = Array.from({length: 16}, (_, i) => i + 1)
-            .map(num => `
-          <button
-            class="pager-btn ${selectedQueue === num ? 'selected' : ''}"
-            onclick="selectPager(${num})"
-          >${num}</button>
-        `).join("");
+            .map(num => {
+                const isSelected = selectedQueue === num;
+                const isOccupied = occupiedPagers.includes(num);  // Foglalt-e ez a pager?
+
+                // Ha foglalt ÉS nem ez a kiválasztott (ami küldés előtt van)
+                // akkor szürke és nem kattintható
+                if (isOccupied && !isSelected) {
+                    return `
+              <button
+                class="pager-btn occupied"
+                disabled
+                title="#${num} pager már ki van adva"
+              >${num}</button>
+            `;
+                }
+
+                // Szabad vagy éppen kiválasztott pager → normál gomb
+                return `
+            <button
+              class="pager-btn ${isSelected ? 'selected' : ''}"
+              onclick="selectPager(${num})"
+            >${num}</button>
+          `;
+            }).join("");
     }
 
 
@@ -633,6 +676,14 @@
     // num: a megnyomott gomb száma (1-16)
     // ============================================================
     function selectPager(num) {
+        // Ellenőrzés: foglalt-e ez a pager?
+        // (Biztonsági check, bár a disabled gomb elvileg nem kattintható)
+        const occupiedPagers = Object.values(orders).map(o => o.queue);
+        if (occupiedPagers.includes(num)) {
+            alert(`A #${num} pager már ki van adva! Várj amíg visszahozzák.`);
+            return;
+        }
+
         // Ha ugyanazt nyomja meg újra, töröljük a kiválasztást
         if (selectedQueue === num) {
             selectedQueue = null;
@@ -877,6 +928,9 @@
         // snapshot.val() → az adatbázisból jövő adat
         orders = snapshot.val() || {};  // Ha null (üres), legyen üres objektum
         renderOrders();
+        // Pager gombokat is frissítjük, mert változhattak a foglalt pagerek
+        // Pl. ha töröltek egy rendelést, az a pager újra szabad lesz
+        renderPagerButtons();
     });
 
 

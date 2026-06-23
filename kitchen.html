@@ -74,12 +74,16 @@
        RENDELÉS KÁRTYA
     ============================================================ */
     .order-card {
-      background: #16213e;
-      border-radius: 12px;
-      padding: 16px;
-      border: 2px solid #e94560;        /* Piros keret = ÚJ rendelés */
-      transition: all 0.3s;
-      position: relative;
+        background: #16213e;
+        border-radius: 12px;
+        padding: 16px;
+        border: 2px solid #e94560;
+        transition: all 0.3s;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        word-wrap: break-word;      /* ← EZT add hozzá */
+        overflow-wrap: break-word;  /* ← ÉS EZT */
     }
 
     /* ÚJ rendelés: pulzáló animáció hogy feltűnő legyen */
@@ -170,11 +174,11 @@
 
     /* Megjegyzés – kisebb, dőlt */
     .item-note {
-      margin-top: 3px;
-      padding-left: 44px;    /* Igazodás a mennyiség oszlophoz */
-      color: #f39c12;
-      font-size: 0.85rem;
-      font-style: italic;
+        margin-top: 3px;
+        padding-left: 44px;
+        color: #f39c12;
+        font-size: 1.5rem;
+        font-style: italic;
     }
 
     /* ============================================================
@@ -192,7 +196,7 @@
       font-weight: bold;
       padding: 14px;
       cursor: pointer;
-      margin-top: 14px;
+      margin-top: auto;
       transition: background 0.2s;
       letter-spacing: 1px;
     }
@@ -209,7 +213,7 @@
       font-size: 0.9rem;
       padding: 10px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: auto;
       transition: all 0.2s;
     }
 
@@ -419,6 +423,7 @@
             <p>Még nincs rendelés.</p>
           </div>
         `;
+        return;
         return;
       }
 
