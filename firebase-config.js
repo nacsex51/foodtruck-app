@@ -22,3 +22,9 @@ const db = firebase.database();
 
 // A rendelések tárolási helye az adatbázisban
 const ordersRef = db.ref("orders");
+
+// A napi statisztika tárolási helye az adatbázisban
+// (rendeléskor/állapotváltáskor frissül, és a "Statisztika nullázása"
+// gombbal ürül ki – független az "orders" lista tartalmától,
+// így törölt rendelések után is helyes marad az összesítés)
+const statsRef = db.ref("dailyStats");

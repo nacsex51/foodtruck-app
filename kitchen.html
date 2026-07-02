@@ -493,6 +493,13 @@
     // ============================================================
     function setStatus(orderId, newStatus) {
       ordersRef.child(orderId).update({ status: newStatus });
+
+      // Napi statisztika "teljesített" számlálójának frissítése.
+      // Ez a pénztáros oldali statisztika modalban jelenik meg, és
+      // független attól, hogy a rendelést később törlik-e.
+      statsRef.update({
+        doneCount: firebase.database.ServerValue.increment(newStatus === "done" ? 1 : -1)
+      });
     }
 
 

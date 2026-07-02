@@ -514,6 +514,25 @@
             margin-top: 16px;
             font-size: 0.95rem;
         }
+
+        /* Napi statisztika nullázása gomb – visszafogottabb, mint a Bezárás */
+        .reset-stats-btn {
+            width: 100%;
+            background: none;
+            border: 1px solid #e94560;
+            border-radius: 8px;
+            color: #e94560;
+            padding: 10px;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            transition: all 0.15s;
+        }
+
+        .reset-stats-btn:hover {
+            background: #e94560;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -610,6 +629,7 @@
     <div class="modal">
         <h2>📊 Mai nap statisztikája</h2>
         <div id="statsContent"></div>
+        <button class="reset-stats-btn" onclick="resetStats()">🗑️ Statisztika nullázása</button>
         <button class="modal-close" onclick="closeStats()">Bezárás</button>
     </div>
 </div>
@@ -627,6 +647,7 @@
     let cart = [];
     let orders = {};
     let selectedQueue = null;  // A kiválasztott pager sorszáma (1-16)
+    let dailyStats = { orderCount: 0, doneCount: 0, items: {} };  // Tartósan tárolt napi statisztika
 
 
     // ============================================================
@@ -837,6 +858,18 @@
         // Küldés Firebase-be
         ordersRef.push(order)
             .then(() => {
+                // Napi statisztika frissítése: rendelésszám + tételek darabszáma
+                // nő. Ez a rendelés törlésétől függetlenül megmarad, egészen
+                // amíg valaki rá nem nyom a "Statisztika nullázása" gombra.
+                const statsUpdates = {
+                    orderCount: firebase.database.ServerValue.increment(1)
+                };
+                cart.forEach(item => {
+                    statsUpdates[`items/${item.name}`] =
+                        firebase.database.ServerValue.increment(item.qty);
+                });
+                statsRef.update(statsUpdates);
+
                 // Sikeres küldés után visszaállítunk mindent
                 cart = [];
                 selectedQueue = null;
@@ -934,44 +967,34 @@
         renderPagerButtons();
     });
 
+    // A tartósan tárolt napi statisztikát is folyamatosan figyeljük,
+    // hogy a modal mindig a legfrissebb adatot mutassa.
+    statsRef.on("value", (snapshot) => {
+        dailyStats = snapshot.val() || { orderCount: 0, doneCount: 0, items: {} };
+    });
+
 
     // ============================================================
     // NAPI STATISZTIKA
     // ============================================================
     function showStats() {
-        // Ma éjfél időbélyege (a nap kezdete)
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);  // 00:00:00 re állítja az időt
-        const todayStartTs = todayStart.getTime();  // milliszekundumban
-
-        // Összes rendelés végigfutása
-        const allOrders = Object.values(orders);
-
-        // Csak a mai rendelések
-        const todayOrders = allOrders.filter(o => o.timestamp >= todayStartTs);
-
-        // Ételszámlálás: melyikből mennyi fogyott ma
-        const itemCounts = {};
-        todayOrders.forEach(order => {
-            order.items.forEach(item => {
-                // Ha még nincs ilyen étel a számlálóban, hozzáadjuk
-                itemCounts[item.name] = (itemCounts[item.name] || 0) + item.qty;
-            });
-        });
+        const orderCount = dailyStats.orderCount || 0;
+        const doneCount = dailyStats.doneCount || 0;
+        const items = dailyStats.items || {};
 
         // Rendezés: legtöbbet rendelt étel előre
-        const sorted = Object.entries(itemCounts)
+        const sorted = Object.entries(items)
             .sort((a, b) => b[1] - a[1]);  // b[1] - a[1] → csökkenő sorrend
 
         // HTML összeállítása a modalhoz
         let html = `
         <div class="stat-row">
           <span>Összes rendelés ma:</span>
-          <span class="stat-value">${todayOrders.length} db</span>
+          <span class="stat-value">${orderCount} db</span>
         </div>
         <div class="stat-row">
           <span>Ebből teljesített:</span>
-          <span class="stat-value">${todayOrders.filter(o => o.status === "done").length} db</span>
+          <span class="stat-value">${doneCount} db</span>
         </div>
         <p style="color:#a0a0b0;font-size:0.75rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">
           Eladott ételek
@@ -993,6 +1016,19 @@
 
         document.getElementById("statsContent").innerHTML = html;
         document.getElementById("statsModal").classList.add("open");
+    }
+
+    // ============================================================
+    // NAPI STATISZTIKA NULLÁZÁSA
+    // A tárolt statisztikát (rendelésszám, teljesített darabszám,
+    // eladott ételek) visszaállítja nulláára. Az aktív rendeléseket
+    // (orders lista) NEM érinti.
+    // ============================================================
+    function resetStats() {
+        if (!confirm("Biztosan nullázod a napi statisztikát? Ez nem vonható vissza.")) return;
+
+        statsRef.set({ orderCount: 0, doneCount: 0, items: {} })
+            .then(() => showStats());  // Modal tartalmának azonnali frissítése
     }
 
     function closeStats() {
