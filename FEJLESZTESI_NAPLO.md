@@ -168,8 +168,9 @@ Pages build minden alkalommal elhasalt, 0 másodperc alatt, generikus
 **Első feltételezés (tévesnek bizonyult):** a repo Pages API-ja
 `"build_type": "legacy"`-t mutatott, ami a régi, kivezetés alatt álló
 Jekyll-alapú Pages-builderre utalt. Mivel az app tiszta statikus
-HTML/CSS/JS, és nem talált a diffben Liquid-szerű szintaxist (`{{ }}`,
-`{% %}`), a feltételezés az volt, hogy a Jekyll-feldolgozás felesleges
+HTML/CSS/JS, és nem talált a diffben Liquid-szerű sablon-jelölést
+(dupla kapcsos zárójel vagy százalékjeles blokk-tag), a feltételezés az
+volt, hogy a Jekyll-feldolgozás felesleges
 és hibázik – ezért bekerült egy üres `.nojekyll` fájl a Jekyll build
 kikapcsolására (`7878194`).
 
@@ -185,10 +186,41 @@ valószínűleg átmeneti GitHub-oldali torlódás/hiba a Pages
 deploy-szolgáltatásban, nem a repo tartalmának vagy konfigurációjának
 hibája.
 
-**Következmény:** mivel a `.nojekyll` hozzáadása nem oldotta meg a
-tényleges problémát, a felhasználó kérésére a commitot visszavontuk
-(`git revert 7878194` → `acafc03`), így a repo tartalma visszaállt a
-`21df49a` állapotra. A build/deploy hiba oka a jelenlegi ismeretek
-szerint GitHub-oldali, repóban nem javítható – ha újra jelentkezik,
-érdemes a "Re-run jobs" gombbal újrapróbálni, vagy a GitHub Status
-oldalt (githubstatus.com) ellenőrizni.
+**Első visszaállítás:** mivel a `.nojekyll` láthatóan nem oldotta meg a
+problémát (a deploy lépés ekkor is elakadt), a felhasználó kérésére a
+commitot visszavontuk (`git revert 7878194` → `acafc03`).
+
+**A tényleges, végleges ok (közvetlen build-log alapján igazolva):**
+a `acafc03` utáni deploy csak azért "akadt el" és lett "cancelled", mert
+egymás után gyors egymásutánban több push történt, és a
+`pages-build-deployment` workflow minden újabb push-nál lecancelezi a
+még futó korábbi deploy-t ("Canceling since a higher priority waiting
+request... exists") – ez **normális, várt működés**, nem hiba.
+
+A valódi build-hibát a következő push (`635fa98`, a napló-frissítés)
+job logja mutatta meg egyértelműen: a Jekyll Liquid sablon-motorja
+szintaxis-hibát dobott a 172. sorra, mert egy szabálytalanul lezárt,
+Liquid-jelöléshez hasonló blokk-tag szerepelt a szövegben.
+
+A `FEJLESZTESI_NAPLO.md` 172. sorában **szó szerint** ott állt a
+Liquid blokk-tag jelölése (a Liquid-szintaxist illusztráló példa saját
+magunk írta dokumentációban) – ezt a Jekyll build a saját sablon-motorja
+(Liquid) parancsaként próbálta értelmezni, és mivel nem volt szabályos
+Liquid tag, elszállt rajta a build. Tehát:
+- Jekyll **valóban fut** ezen a repón (a Pages API "legacy" jelzése és a
+  Jekyll-image (`jekyll-build-pages`) használata is ezt igazolja),
+- és **valóban el is tud hasalni** tetszőleges `.md`/`.html` fájl
+  tartalmán, ha az véletlenül Liquid-szerű jelölést tartalmaz – ez
+  a projekt saját dokumentációjában (ami folyamatosan bővül kódrészletekkel)
+  bármikor újra előfordulhat.
+
+**Végleges megoldás:**
+1. A hibás szövegrész javítása a naplóban (a szó szerinti Liquid-jelölés
+   helyett szöveges körülírás, hogy ne legyen Liquid-nek értelmezhető) –
+   megtörtént.
+2. A `.nojekyll` **újbóli** hozzáadása – ezúttal nem feltételezésből,
+   hanem bizonyítottan: a `7878194` build logja korábban megmutatta,
+   hogy `.nojekyll` jelenlétében a "Build with Jekyll" lépés teljesen
+   ki is marad, a `build` job zöld lesz. Mivel az app tiszta statikus
+   HTML/CSS/JS és semmilyen Jekyll-funkciót nem használ, ez a helyes,
+   végleges beállítás – nem csak egy tünetkezelés. Megtörtént.
