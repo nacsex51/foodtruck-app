@@ -203,6 +203,19 @@
             cursor: pointer;        /* Kézzel mutató egér kurzor */
             transition: all 0.15s;  /* Sima átmenet kattintáskor */
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .menu-btn-price {
+            font-size: 0.78rem;
+            color: #a0a0b0;
+        }
+
+        .menu-btn.in-cart .menu-btn-price {
+            color: #ffe0e6;
         }
 
         .menu-btn:hover {
@@ -253,6 +266,34 @@
         .cart-item-name {
             font-weight: bold;
             font-size: 0.95rem;
+        }
+
+        .cart-item-price {
+            color: #a0a0b0;
+            font-size: 0.85rem;
+        }
+
+        .cart-item-line-total {
+            font-weight: bold;
+            color: #e94560;
+            font-size: 0.85rem;
+        }
+
+        /* Végösszeg a kosár alján */
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #2a2a4e;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .cart-total span:last-child {
+            color: #e94560;
+            font-size: 1.15rem;
         }
 
         /* Törlés gomb egy kosár tételnél */
@@ -396,9 +437,17 @@
 
         /* Egy étel sor a rendelésen belül */
         .order-item-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
             font-size: 1.2rem;
             padding: 4px 0;
             border-bottom: 1px solid #2a2a4e;
+        }
+
+        .order-item-line .order-item-note {
+            width: 100%;
         }
 
         .order-item-line:last-child {
@@ -409,6 +458,26 @@
             color: #a0a0b0;
             font-size: 0.78rem;
             font-style: italic;
+        }
+
+        .order-item-price {
+            color: #a0a0b0;
+            font-size: 0.9rem;
+            font-weight: normal;
+        }
+
+        /* Rendelés végösszege az order kártyán */
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            padding: 8px 0 4px;
+            margin-top: 4px;
+            border-top: 1px solid #2a2a4e;
+        }
+
+        .order-total span:last-child {
+            color: #e94560;
         }
 
         /* Törlés gomb a rendelés kártyán */
@@ -581,14 +650,38 @@
 
         <p class="category-title">🍔 Kaják</p>
         <div class="menu-grid">
-            <button class="menu-btn" onclick="addToCart('Dupli Cheeseburger')">Dupli Cheeseburger</button>
-            <button class="menu-btn" onclick="addToCart('Cheeseburger')">Cheeseburger</button>
-            <button class="menu-btn" onclick="addToCart('Gyros Pita')">Gyros Pita</button>
-            <button class="menu-btn" onclick="addToCart('Gyros Box')">Gyros Box</button>
-            <button class="menu-btn" onclick="addToCart('Pulled Pork')">Pulled Pork</button>
-            <button class="menu-btn" onclick="addToCart('Pulled Chicken')">Pulled Chicken</button>
-            <button class="menu-btn" onclick="addToCart('Pljeskavica')">Pljeskavica</button>
-            <button class="menu-btn" onclick="addToCart('Pomfrit')">Pomfrit</button>
+            <button class="menu-btn" data-name="Dupli Cheeseburger" onclick="addToCart('Dupli Cheeseburger')">
+                <span class="menu-btn-name">Dupli Cheeseburger</span>
+                <span class="menu-btn-price">2200 din</span>
+            </button>
+            <button class="menu-btn" data-name="Cheeseburger" onclick="addToCart('Cheeseburger')">
+                <span class="menu-btn-name">Cheeseburger</span>
+                <span class="menu-btn-price">1800 din</span>
+            </button>
+            <button class="menu-btn" data-name="Gyros Pita" onclick="addToCart('Gyros Pita')">
+                <span class="menu-btn-name">Gyros Pita</span>
+                <span class="menu-btn-price">1900 din</span>
+            </button>
+            <button class="menu-btn" data-name="Gyros Box" onclick="addToCart('Gyros Box')">
+                <span class="menu-btn-name">Gyros Box</span>
+                <span class="menu-btn-price">2400 din</span>
+            </button>
+            <button class="menu-btn" data-name="Pulled Pork" onclick="addToCart('Pulled Pork')">
+                <span class="menu-btn-name">Pulled Pork</span>
+                <span class="menu-btn-price">2300 din</span>
+            </button>
+            <button class="menu-btn" data-name="Pulled Chicken" onclick="addToCart('Pulled Chicken')">
+                <span class="menu-btn-name">Pulled Chicken</span>
+                <span class="menu-btn-price">2100 din</span>
+            </button>
+            <button class="menu-btn" data-name="Pljeskavica" onclick="addToCart('Pljeskavica')">
+                <span class="menu-btn-name">Pljeskavica</span>
+                <span class="menu-btn-price">2000 din</span>
+            </button>
+            <button class="menu-btn" data-name="Pomfrit" onclick="addToCart('Pomfrit')">
+                <span class="menu-btn-name">Pomfrit</span>
+                <span class="menu-btn-price">900 din</span>
+            </button>
         </div>
 
         <!-- KOSÁR: az összerakott rendelés -->
@@ -596,6 +689,7 @@
             <h3>🛒 Aktuális rendelés</h3>
             <!-- ide kerülnek a kosár tételek JavaScript-ből -->
             <div id="cartItems"></div>
+            <div class="cart-total" id="cartTotal"></div>
         </div>
 
         <!-- Küldés gomb -->
@@ -648,6 +742,21 @@
     let orders = {};
     let selectedQueue = null;  // A kiválasztott pager sorszáma (1-16)
     let dailyStats = { orderCount: 0, doneCount: 0, items: {} };  // Tartósan tárolt napi statisztika
+
+    // ============================================================
+    // ÁRLISTA (din) – egyelőre becsült árak, nem kell pontosnak lenniük.
+    // Az étel neve alapján keressük ki az árát mindenhol.
+    // ============================================================
+    const MENU_PRICES = {
+        "Dupli Cheeseburger": 2200,
+        "Cheeseburger": 1800,
+        "Gyros Pita": 1900,
+        "Gyros Box": 2400,
+        "Pulled Pork": 2300,
+        "Pulled Chicken": 2100,
+        "Pljeskavica": 2000,
+        "Pomfrit": 900
+    };
 
 
     // ============================================================
@@ -734,8 +843,8 @@
             // Ha már benne van, növeljük a mennyiségét
             existing.qty += 1;
         } else {
-            // Ha még nincs benne, hozzáadjuk
-            cart.push({ name: itemName, qty: 1, note: "" });
+            // Ha még nincs benne, hozzáadjuk (az árát az árlistából vesszük)
+            cart.push({ name: itemName, qty: 1, note: "", price: MENU_PRICES[itemName] || 0 });
         }
 
         // Frissítjük a kosár megjelenítést
@@ -753,6 +862,7 @@
         // Ha üres a kosár
         if (cart.length === 0) {
             container.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs tétel a kosárban.</p>';
+            document.getElementById("cartTotal").innerHTML = "";
             // Menü gombok visszaállítása (egyik sem kiemelve)
             document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("in-cart"));
             return;
@@ -760,7 +870,7 @@
 
         // Kiemeljük azokat a menü gombokat, amik a kosárban vannak
         document.querySelectorAll(".menu-btn").forEach(btn => {
-            const inCart = cart.some(i => i.name === btn.textContent.trim());
+            const inCart = cart.some(i => i.name === btn.dataset.name);
             btn.classList.toggle("in-cart", inCart);
         });
 
@@ -772,6 +882,11 @@
           <div class="cart-item-header">
             <span class="cart-item-name">${item.name}</span>
             <button class="remove-item-btn" onclick="removeFromCart(${index})">✕</button>
+          </div>
+
+          <div class="cart-item-header">
+            <span class="cart-item-price">${item.price} din / db</span>
+            <span class="cart-item-line-total">${item.price * item.qty} din</span>
           </div>
 
           <!-- Mennyiség +/- kezelő -->
@@ -791,6 +906,13 @@
           >${item.note}</textarea>
         </div>
       `).join("");
+
+        // Végösszeg kiszámítása: minden tétel ára × mennyisége, összeadva
+        const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        document.getElementById("cartTotal").innerHTML = `
+        <span>Végösszeg:</span>
+        <span>${total} din</span>
+      `;
     }
 
 
@@ -936,9 +1058,16 @@
             ${order.items.map(item => `
               <div class="order-item-line">
                 <strong>${item.qty}× ${item.name}</strong>
+                <span class="order-item-price">${(item.price || 0) * item.qty} din</span>
                 ${item.note ? `<div class="order-item-note">📝 ${item.note}</div>` : ''}
               </div>
             `).join("")}
+
+            <!-- Rendelés végösszege -->
+            <div class="order-total">
+              <span>Végösszeg:</span>
+              <span>${order.items.reduce((sum, item) => sum + (item.price || 0) * item.qty, 0)} din</span>
+            </div>
 
             <!-- Törlés gomb (csak a pénztáros tableten van) -->
             <button class="delete-btn" onclick="deleteOrder('${id}')">

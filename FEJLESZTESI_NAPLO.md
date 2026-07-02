@@ -40,8 +40,8 @@ foodtruck-app/
 {
   queue: 3,                 // Pager sorszám (1–16)
   items: [
-    { name: "Cheeseburger", qty: 1, note: "" },
-    { name: "Pljeskavica",  qty: 1, note: "hagyma nélkül" }
+    { name: "Cheeseburger", qty: 1, note: "", price: 1800 },
+    { name: "Pljeskavica",  qty: 1, note: "hagyma nélkül", price: 2000 }
   ],
   status: "new" | "done",   // Konyhai állapot
   timestamp: 1782684888781  // Létrehozás ideje (ms)
@@ -63,7 +63,11 @@ foodtruck-app/
    aktív, még nem törölt rendelése) szürkék és nem kattinthatók.
 2. **Kosár összeállítása** – a "KAJÁK" menüből tételekre kattintva kerülnek
    a kosárba; azonos tétel duplikattintásra csak a darabszámot növeli.
-   Minden tételhez írható egyedi megjegyzés (pl. "hagyma nélkül").
+   Minden tételhez írható egyedi megjegyzés (pl. "hagyma nélkül"). Minden
+   menügomb és kosártétel mutatja az egységárat, a kosártételeknél a
+   sorösszeget (egységár × darabszám) is, a kosár alján pedig egy
+   "Végösszeg" sor összegzi az egész rendelést – mennyiségváltozáskor
+   azonnal frissül.
 3. **Rendelés küldése** – a `sendOrder()` függvény:
    - ellenőrzi, hogy van-e kiválasztott pager és nem üres-e a kosár
    - felpusholja a rendelést az `orders` ághoz (`status: "new"`)
@@ -96,10 +100,22 @@ foodtruck-app/
 5. Rendelés törlése csak a pénztáros oldalról lehetséges; ha ott törlik,
    a konyhai nézetből is azonnal eltűnik (közös Firebase adat).
 
-### Menü (jelenlegi tételek)
+### Menü (jelenlegi tételek) és árak
 
-Dupli Cheeseburger, Cheeseburger, Gyros Pita, Gyros Box, Pulled Pork,
-Pulled Chicken, Pljeskavica, Pomfrit.
+Az árak (din) a `MENU_PRICES` objektumban (`index.html`) vannak
+megadva – ezek egyelőre becsült, kerekített árak, nem kell pontosnak
+lenniük, bármikor módosíthatók.
+
+| Tétel | Ár |
+|---|---|
+| Dupli Cheeseburger | 2200 din |
+| Cheeseburger | 1800 din |
+| Gyros Pita | 1900 din |
+| Gyros Box | 2400 din |
+| Pulled Pork | 2300 din |
+| Pulled Chicken | 2100 din |
+| Pljeskavica | 2000 din |
+| Pomfrit | 900 din |
 
 Bővítés: `TELEPITES.md` "6. LÉPÉS" pontja leírja, hogyan kell új
 tételt/kategóriát felvenni az `index.html`-ben.
@@ -224,3 +240,57 @@ Liquid tag, elszállt rajta a build. Tehát:
    ki is marad, a `build` job zöld lesz. Mivel az app tiszta statikus
    HTML/CSS/JS és semmilyen Jekyll-funkciót nem használ, ez a helyes,
    végleges beállítás – nem csak egy tünetkezelés. Megtörtént.
+
+### 2026-07-02 – Árak megjelenítése a pénztár oldalon
+
+**Igény:** a pénztáros lássa az egyes ételek árát, és a rendelés
+összeállításakor automatikusan összeadódjon a végösszeg. Pontos árak
+még nincsenek kialakítva, ezért egyelőre becsült, kerekített din-értékek
+kerültek be (lásd fenti "Menü és árak" táblázat), amiket bármikor könnyű
+módosítani a `MENU_PRICES` objektumban.
+
+**Változások (`index.html`):**
+- új `MENU_PRICES` konstans: étel név → ár (din)
+- a menügombok mostantól az étel neve alatt az árat is mutatják
+  (a korábbi, puszta szöveges gombtartalom helyett név+ár span párra
+  állt át; emiatt a "kosárban van-e" jelölés is `data-name` attribútumra
+  váltott a korábbi `textContent` összehasonlítás helyett, mert az árral
+  bővült szöveg már nem egyezett volna az étel nevével)
+- `addToCart()` a kosártételhez elmenti az árat is (`price` mező)
+- a kosár (`renderCart()`) tételenként mutatja az egységárat és a
+  sorösszeget, alul pedig egy "Végösszeg" sort, ami minden
+  mennyiség-/tétel-változáskor újraszámol
+- az aktív rendelések listáján (`renderOrders()`) tételenként megjelenik
+  az ár, a kártya alján pedig a rendelés végösszege
+- a `sendOrder()` által a Firebase-be küldött `order.items` mostantól a
+  `price` mezőt is tartalmazza, így a régebbi (ár nélküli) rendelések
+  `item.price || 0`-ként kerülnek kiszámolásra, hogy ne dobjon hibát
+
+**Tesztelés:** helyi statikus szerveren (preview), élő Firebase
+adatbázis ellen. Tétel hozzáadása, mennyiség növelése/csökkentése és
+végösszeg-újraszámolás vizuálisan ellenőrizve. Tesztelés közben egy
+korábbi munkamenetből megmaradt böngésző-állapot miatt véletlenül
+elküldődött egy teszt-rendelés (#12 pager, Pulled Pork + Pulled
+Chicken) az éles adatbázisba – ezt azonnal töröltem a pénztár oldal
+"🗑️ Rendelés törlése" gombjával, az éles adatbázis tiszta állapotban
+maradt.
+
+### 2026-07-02 – Megerősítve: a konyhai oldal nem mutat árat + pénznem "din"-re állítva
+
+**Igény:** a szakács ne lássa az árakat (felesleges info neki), ez
+maradjon kizárólag a pénztáros oldalon; illetve a pénznem "Ft" helyett
+"din" legyen mindenhol.
+
+**Ellenőrzés:** a `kitchen.html` eleve sosem kapott ár-megjelenítést
+(csak az `index.html` módosult az előző bejegyzésben), így ez a kérés
+kódmódosítás nélkül is teljesült. Preview-val igazoltam: azonos élő
+rendelés (#15 pager, Cheeseburger) a pénztár oldalon egységárral és
+végösszeggel jelenik meg, a konyhai oldalon viszont kizárólag a pager
+szám és a tétel neve/darabszáma látszik, ár nélkül. A teszt-rendelést
+utána azonnal töröltem, az éles adatbázis tiszta maradt.
+
+**Pénznem váltás (`index.html`, `FEJLESZTESI_NAPLO.md`):** minden
+"Ft" felirat (menügombok, kosártételek, kosár végösszeg, aktív
+rendelések tételei és végösszege) "din"-re cserélve. Csak
+megjelenítési/szöveg-csere, a `MENU_PRICES` értékek és a számítási
+logika változatlan.
