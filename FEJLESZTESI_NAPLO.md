@@ -159,3 +159,36 @@ tiszta állapotban maradt.
 
 **Branch/merge:** `napi-statisztika-javitas` branch → fast-forward
 merge `main`-be → push GitHub-ra (`nacsex51/foodtruck-app`).
+
+### 2026-07-02 – GitHub Pages deploy hiba vizsgálata és a `.nojekyll` kísérlet visszavonása
+**Probléma:** a `962fd61` és `21df49a` commitok pusholása után a GitHub
+Pages build minden alkalommal elhasalt, 0 másodperc alatt, generikus
+"Page build failed" üzenettel (látszott a repo Deployments nézetében is).
+
+**Első feltételezés (tévesnek bizonyult):** a repo Pages API-ja
+`"build_type": "legacy"`-t mutatott, ami a régi, kivezetés alatt álló
+Jekyll-alapú Pages-builderre utalt. Mivel az app tiszta statikus
+HTML/CSS/JS, és nem talált a diffben Liquid-szerű szintaxist (`{{ }}`,
+`{% %}`), a feltételezés az volt, hogy a Jekyll-feldolgozás felesleges
+és hibázik – ezért bekerült egy üres `.nojekyll` fájl a Jekyll build
+kikapcsolására (`7878194`).
+
+**Mi derült ki valójában:** a felhasználó megküldte a tényleges GitHub
+Actions futás naplóját ("pages build and deployment" workflow). Abból
+kiderült, hogy a hiba forrása **nem Jekyll**, hanem az
+`actions/deploy-pages@v5` lépés: a deploy `deployment_queued` állapotban
+ragadt percekig, majd 10 perc után időtúllépéssel megszakadt
+("Timeout reached, aborting!"). A `github-pages` Environment
+ellenőrzése (`GET /repos/.../environments/github-pages`) nem mutatott
+kötelező jóváhagyót/reviewert, ami ezt magyarázná – tehát ez
+valószínűleg átmeneti GitHub-oldali torlódás/hiba a Pages
+deploy-szolgáltatásban, nem a repo tartalmának vagy konfigurációjának
+hibája.
+
+**Következmény:** mivel a `.nojekyll` hozzáadása nem oldotta meg a
+tényleges problémát, a felhasználó kérésére a commitot visszavontuk
+(`git revert 7878194` → `acafc03`), így a repo tartalma visszaállt a
+`21df49a` állapotra. A build/deploy hiba oka a jelenlegi ismeretek
+szerint GitHub-oldali, repóban nem javítható – ha újra jelentkezik,
+érdemes a "Re-run jobs" gombbal újrapróbálni, vagy a GitHub Status
+oldalt (githubstatus.com) ellenőrizni.
