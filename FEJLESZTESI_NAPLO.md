@@ -30,8 +30,31 @@ foodtruck-app/
 ├── index.html          – Pénztáros felület (rendelésfelvitel)
 ├── kitchen.html         – Szakács felület (konyhai kijelző)
 ├── firebase-config.js   – Közös Firebase kapcsolódási adatok
+├── icons.js             – Közös SVG ikon-készlet (2026-07-03 óta)
 └── TELEPITES.md         – Telepítési útmutató
 ```
+
+### Vizuális dizájn (2026-07-03 óta)
+
+Mindkét felület egy közös, sötét "prémium" dizájnrendszert használ
+(CSS custom property-k a `<style>` blokk elején), emoji helyett
+letisztult SVG vonal-ikonokkal (`icons.js`, `icon()`/`hydrateIcons()`
+függvények). A két tablet saját "azonosító színt" kapott, hogy első
+pillantásra megkülönböztethetők legyenek:
+
+| | Pénztár (`index.html`) | Konyha (`kitchen.html`) |
+|---|---|---|
+| Azonosító szín | Parázs narancs-piros `#d93a16` | Arany-borostyán `#ffb020` |
+| Kiemelt (ár/mennyiség) szín | Arany `#ffb020` | Arany `#ffb020` |
+| Figyelmeztető szín | – | Piros `#ef4444` (ÚJ rendelés pulzálás) |
+
+Közös elemek: sötét háttér-gradiens (`#12121a` → `#08080c`), kártyák
+`#14141c`/`#1c1c26` réteg-színekkel és halvány (`rgba(255,255,255,.08)`)
+szegéllyel, `Outfit` betűtípus a kiemelésekhez/számokhoz, `Rubik` a
+törzsszöveghez/gombokhoz (Google Fonts). A Pénztár fejlécében a jobb
+felső sarokban, a rendelésszám mellett egy ikon-only fogaskerék gomb
+nyitja az Étlap beállítása modalt (korábban egy teljes szélességű,
+szöveges gomb volt a jobb panelen).
 
 ### Adatmodell (Firebase Realtime Database)
 
@@ -370,3 +393,58 @@ gombokat és árakat szimulált `menuItems` adatból, a kosárba tevés
 végösszege és az "in-cart" kiemelés is helyesen frissül. Élő
 adatbázisba írás nem történt (a `permission_denied` miatt), így
 takarítanivaló sem maradt.
+
+### 2026-07-03 – Vizuális redesign: prémium sötét dizájn, SVG ikonok, fejléc-gomb
+
+**Igény:** a Beállítások gomb legyen egy ikon-only fogaskerék a fejléc
+jobb felső sarkában (a rendelésszám mellett) a korábbi teljes szélességű
+szöveges gomb helyett; illetve az app kinézete ne "átlagos"/sablon
+hatású legyen, hanem egyedi, eladható, miközben egyszerű és gyorsan
+átlátható maradjon a gyors rendelésfelvitelhez.
+
+**Folyamat:** a `ui-ux-pro-max` skill design-system és domain kereséseit
+használtam (`product`/`style`/`color`/`typography` domainek) a "food
+truck POS tablet, prémium, nem sablon" kritériumokra. A "Digital
+Signage/Kiosk" termék-ajánlás (Minimalizmus + Sötét mód) és a "Modern
+Dark (Cinema Mobile)" stílus (mély fekete-közeli háttér, hajszálvékony
+szegélyek, lekerekített kártyák) adta az alapot, "étvágygerjesztő"
+meleg akcens-színekkel kombinálva (a search script ált. landing
+page-eket ajánlott alapból, ezért finomítottam a lekérdezéseket
+"POS/kiosk tool" irányba).
+
+**Változások:**
+- új `icons.js`: közös SVG vonal-ikon készlet (`icon(name, size)`,
+  `hydrateIcons()`) – az `index.html` és `kitchen.html` minden emoji
+  ikonja (🍔🔔🛒📤📊⚙️🗑️✅🔴📋📝🍳🍽️↩️🔔🔕➕✕) helyett; a fogaskerék
+  ikon matematikailag generált (gyűrű + 8 fog `rotate()`-tel), hogy
+  garantáltan helyesen jelenjen meg
+- mindkét fájlban CSS custom property-alapú dizájn-token rendszer
+  (`--bg`, `--bg-elevated`, `--primary`, `--gold`, `--radius-*` stb.),
+  Google Fonts `Outfit` (kiemelések/számok) + `Rubik` (törzsszöveg)
+  betűpár
+- Pénztár (`index.html`): azonosító szín parázs narancs-piros
+  `#d93a16` (a WCAG AA kontrasztkövetelmény miatt sötétebbre húzva a
+  kezdeti `#ff5a36`-ról, mert fehér szöveggel kombinálva az alatta
+  maradt volna); árak/mennyiségek arany (`#ffb020`) kiemeléssel
+- Konyha (`kitchen.html`): azonosító szín arany-borostyán `#ffb020`,
+  az "ÚJ rendelés" figyelmeztető szín (pulzáló keret, értesítő sáv)
+  piros `#ef4444` maradt (funkcionális "sürgős" jelzés, nem márka-szín)
+- **fejléc-gomb**: a "⚙️ Étlap beállítása" szöveges gomb eltávolítva a
+  jobb panelből; helyette ikon-only fogaskerék gomb (`.icon-btn`) a
+  fejlécben, a rendelésszám mellett, `aria-label="Étlap beállítása"` +
+  `title` attribútummal (ikon-only gombnál kötelező a hozzáférhetőségi
+  címke)
+- `TELEPITES.md` "6. LÉPÉS" pontosítva az új gombhelyre
+
+**Tesztelés:** helyi preview-ban mindkét oldal (`index.html`,
+`kitchen.html`) ellenőrizve: konzolhiba nincs, a betűtípusok és
+színek a várt token-értékeket adják vissza (`getComputedStyle`),
+fogaskerék SVG helyesen renderelődik. A `kitchen.html`
+rendeléskártyáit **szimulált, memóriában lévő adattal** teszteltem
+(nem valós `sendOrder()` híváson keresztül) – az automatikus
+engedélyező réteg blokkolta a tényleges élő rendelés-küldést, mivel az
+egy valódi konyhai hangjelzést/értesítést és pager-foglalást váltott
+volna ki a felhasználó explicit jóváhagyása nélkül; ez helyes védelem
+volt, nem került éles adat az adatbázisba. A Beállítások modal, a
+kosár-logika és az étlap-hozzáadás/törlés-validáció (az előző
+bejegyzésben leírtak) a redesign után is hibátlanul működik.

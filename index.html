@@ -11,7 +11,7 @@
     -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="theme-color" content="#0a0a0f" />
 
     <!--
       Firebase SDK betöltése (a Google szervereiről)
@@ -22,7 +22,50 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+    <!-- Egységes SVG ikon-készlet (emoji helyett) -->
+    <script src="icons.js"></script>
+
+    <!-- Betűtípusok: Outfit (kiemelések, számok, árak) + Rubik (törzsszöveg, gombok) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        /* ============================================================
+           DIZÁJN TOKENEK – minden szín/radius/betű innen ered, hogy
+           a Pénztár és a Konyha oldal vizuálisan egységes maradjon,
+           miközben a saját "identitás-színük" (parázs / arany) eltér.
+        ============================================================ */
+        :root {
+            --bg: #0a0a0f;
+            --bg-elevated: #14141c;
+            --bg-elevated-2: #1c1c26;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --text: #f5f5f7;
+            --text-muted: #9a9aac;
+            --text-faint: #5c5c6e;
+
+            --primary: #d93a16;         /* Parázs narancs-piros – Pénztár azonosító szín (WCAG AA fehér szöveggel) */
+            --primary-hover: #ff5a36;
+            --primary-soft: rgba(217, 58, 22, 0.16);
+            --on-primary: #ffffff;
+
+            --gold: #ffb020;            /* Ár-kiemelés – "étvágygerjesztő" arany */
+            --success: #2ecc71;
+            --success-strong: #22b263;
+            --danger: #ef4444;
+            --danger-soft: rgba(239, 68, 68, 0.14);
+
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 9px;
+            --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.35);
+
+            --font-display: 'Outfit', 'Segoe UI', sans-serif;
+            --font-body: 'Rubik', 'Segoe UI', sans-serif;
+        }
+
         /* ============================================================
            ALAP STÍLUSOK
            A * minden HTML elemre vonatkozik.
@@ -35,39 +78,82 @@
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1a1a2e;   /* Sötétkék háttér */
-            color: #eaeaea;         /* Világosszürke szöveg */
-            min-height: 100vh;      /* Teljes képernyő magasság */
+            font-family: var(--font-body);
+            background: linear-gradient(180deg, #121218 0%, #08080c 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        button, input, textarea {
+            font-family: inherit;
         }
 
         /* Fejléc sáv tetején */
         header {
-            background: #16213e;
-            padding: 14px 20px;
+            background: var(--bg-elevated);
+            padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid #e94560;
+            border-bottom: 1px solid var(--border);
             position: sticky;      /* Görgetésnél is látható marad */
             top: 0;
             z-index: 100;
         }
 
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
         header h1 {
-            font-size: 1.2rem;
-            color: #e94560;         /* Piros-narancs szín */
-            letter-spacing: 1px;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* Az aktív rendelések száma a fejlécben */
         .order-count {
-            background: #e94560;
-            color: white;
+            font-family: var(--font-display);
+            background: var(--primary-soft);
+            color: var(--primary-hover);
+            border: 1px solid var(--primary);
             border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 0.85rem;
-            font-weight: bold;
+            padding: 5px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        /* Ikon-only gomb (pl. Beállítások a fejlécben) */
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-elevated-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .icon-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-soft);
         }
 
         /* ============================================================
@@ -76,7 +162,7 @@
         ============================================================ */
         .main-layout {
             display: flex;
-            height: calc(100vh - 58px);  /* Teljes magasság mínusz fejléc */
+            height: calc(100vh - 60px);  /* Teljes magasság mínusz fejléc */
         }
 
         /* Bal panel: rendelés összerakása */
@@ -84,7 +170,7 @@
             width: 55%;
             padding: 16px;
             overflow-y: auto;       /* Görgethetővé teszi ha sok az étel */
-            border-right: 2px solid #16213e;
+            border-right: 1px solid var(--border);
         }
 
         /* Jobb panel: aktív rendelések listája */
@@ -98,17 +184,22 @@
            PAGER GOMBOK (sorszám választó)
         ============================================================ */
         .order-header {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px;
             margin-bottom: 14px;
         }
 
         .order-header label {
-            font-size: 0.8rem;
-            color: #a0a0b0;
-            display: block;
-            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
         /* 8 oszlopos rács a 16 pager gombhoz */
@@ -120,12 +211,13 @@
 
         /* Egy pager gomb */
         .pager-btn {
-            background: #0f3460;
-            border: 2px solid #1a4a7a;
-            border-radius: 8px;
-            color: #eaeaea;
+            font-family: var(--font-display);
+            background: var(--bg-elevated-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
             padding: 10px 4px;
             cursor: pointer;
             transition: all 0.15s;
@@ -133,44 +225,45 @@
         }
 
         .pager-btn:hover {
-            background: #1a5a9a;
-            border-color: #e94560;
+            border-color: var(--primary);
+            color: var(--primary-hover);
         }
 
         /* Kiválasztott pager gomb - kiemelve */
         .pager-btn.selected {
-            background: #e94560;
-            border-color: #ff6b6b;
-            color: white;
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--on-primary);
         }
 
         /* Foglalt pager gomb - szürke, nem kattintható
            opacity: 0.4 → áttetsző, hogy látszódjon hogy nem elérhető
            cursor: not-allowed → tiltott kurzor ráhúzáskor */
         .pager-btn.occupied {
-            background: #2a2a2a;
-            border-color: #444;
-            color: #555;
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-faint);
             cursor: not-allowed;
-            opacity: 0.4;
+            opacity: 0.5;
         }
 
         .pager-btn.occupied:hover {
-            background: #2a2a2a;
-            border-color: #444;
+            border-color: var(--border);
+            color: var(--text-faint);
         }
 
         /* Kiválasztott sorszám megjelenítése */
         .selected-queue {
-            margin-top: 8px;
+            margin-top: 10px;
             font-size: 0.85rem;
-            color: #a0a0b0;
+            color: var(--text-muted);
             text-align: center;
         }
 
         .selected-queue span {
-            color: #e94560;
-            font-weight: bold;
+            font-family: var(--font-display);
+            color: var(--primary-hover);
+            font-weight: 700;
             font-size: 1rem;
         }
 
@@ -181,8 +274,8 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #a0a0b0;
-            margin: 14px 0 8px;
+            color: var(--text-muted);
+            margin: 16px 0 8px;
         }
 
         /* Az ételek gombjai - rács elrendezésben */
@@ -195,12 +288,13 @@
 
         /* Egy étel gomb */
         .menu-btn {
-            background: #0f3460;
-            border: 1px solid #1a4a7a;
-            border-radius: 8px;
-            color: #eaeaea;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text);
             padding: 12px 8px;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
+            font-weight: 500;
             cursor: pointer;        /* Kézzel mutató egér kurzor */
             transition: all 0.15s;  /* Sima átmenet kattintáskor */
             text-align: center;
@@ -211,39 +305,45 @@
         }
 
         .menu-btn-price {
-            font-size: 0.78rem;
-            color: #a0a0b0;
+            font-family: var(--font-display);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--gold);
         }
 
         .menu-btn.in-cart .menu-btn-price {
-            color: #ffe0e6;
+            color: var(--on-primary);
         }
 
         .menu-btn:hover {
-            background: #1a5a9a;
-            border-color: #e94560;
+            border-color: var(--primary);
+            background: var(--bg-elevated-2);
         }
 
         /* Ha az étel már a kosárban van, kiemelve jelenik meg */
         .menu-btn.in-cart {
-            background: #e94560;
-            border-color: #ff6b6b;
-            color: white;
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--on-primary);
         }
 
         /* ============================================================
            KOSÁR (az összerakott rendelés)
         ============================================================ */
         .cart-section {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px;
             margin-top: 14px;
         }
 
         .cart-section h3 {
-            font-size: 0.85rem;
-            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--primary-hover);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -251,8 +351,9 @@
 
         /* Egy kosár tétel */
         .cart-item {
-            background: #0f3460;
-            border-radius: 8px;
+            background: var(--bg-elevated-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
             padding: 10px;
             margin-bottom: 8px;
         }
@@ -265,18 +366,19 @@
         }
 
         .cart-item-name {
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.95rem;
         }
 
         .cart-item-price {
-            color: #a0a0b0;
+            color: var(--text-muted);
             font-size: 0.85rem;
         }
 
         .cart-item-line-total {
-            font-weight: bold;
-            color: #e94560;
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--gold);
             font-size: 0.85rem;
         }
 
@@ -287,33 +389,44 @@
             align-items: center;
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #2a2a4e;
+            border-top: 1px solid var(--border);
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .cart-total span:last-child {
-            color: #e94560;
-            font-size: 1.15rem;
+            font-family: var(--font-display);
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 700;
         }
 
         /* Törlés gomb egy kosár tételnél */
         .remove-item-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: none;
             border: none;
-            color: #e94560;
+            color: var(--text-faint);
             cursor: pointer;
-            font-size: 1.1rem;
-            padding: 0 4px;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .remove-item-btn:hover {
+            color: var(--danger);
+            background: var(--danger-soft);
         }
 
         /* Megjegyzés beviteli mező az étel alatt */
         .item-note {
             width: 100%;
-            background: #1a1a2e;
-            border: 1px solid #2a2a4e;
+            background: var(--bg);
+            border: 1px solid var(--border);
             border-radius: 6px;
-            color: #eaeaea;
+            color: var(--text);
             font-size: 0.85rem;
             padding: 6px 10px;
             resize: none;           /* Ne lehessen átméretezni */
@@ -321,7 +434,7 @@
         }
 
         .item-note::placeholder {
-            color: #606080;
+            color: var(--text-faint);
         }
 
         /* Mennyiség számláló (+/-) */
@@ -332,9 +445,9 @@
         }
 
         .qty-btn {
-            background: #1a4a7a;
-            border: none;
-            color: white;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
+            color: var(--text);
             width: 28px;
             height: 28px;
             border-radius: 50%;   /* Kerek gomb */
@@ -343,10 +456,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .qty-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary-hover);
         }
 
         .qty-display {
-            font-weight: bold;
+            font-family: var(--font-display);
+            font-weight: 600;
             min-width: 24px;
             text-align: center;
         }
@@ -356,22 +476,27 @@
         ============================================================ */
         .send-btn {
             width: 100%;
-            background: #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--primary);
             border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
+            border-radius: var(--radius-md);
+            color: var(--on-primary);
+            font-size: 1.05rem;
+            font-weight: 700;
             padding: 16px;
             cursor: pointer;
             margin-top: 14px;
             transition: background 0.2s;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
-        .send-btn:hover { background: #c73652; }
+        .send-btn:hover { background: var(--primary-hover); }
         .send-btn:disabled {
-            background: #444;
+            background: var(--bg-elevated-2);
+            color: var(--text-faint);
             cursor: not-allowed;
         }
 
@@ -379,8 +504,11 @@
            RENDELÉSEK LISTÁJA (jobb panel)
         ============================================================ */
         .panel-title {
-            font-size: 0.85rem;
-            color: #a0a0b0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 12px;
@@ -388,17 +516,19 @@
 
         /* Egy rendelés kártya */
         .order-card {
-            background: #16213e;
-            border-radius: 10px;
-            padding: 12px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 14px;
             margin-bottom: 10px;
-            border-left: 4px solid #e94560;  /* Piros bal szegély = ÚJ */
+            border-left: 3px solid var(--primary);  /* Bal szegély = ÚJ */
+            box-shadow: var(--shadow-card);
             position: relative;
         }
 
         /* Kész rendelésnél zöld szegély */
         .order-card.done {
-            border-left-color: #2ecc71;
+            border-left-color: var(--success);
             opacity: 0.6;           /* Kicsit elhalványul ha kész */
         }
 
@@ -410,30 +540,44 @@
         }
 
         .order-queue {
+            font-family: var(--font-display);
             font-size: 1.3rem;
-            font-weight: bold;
-            color: #e94560;
+            font-weight: 700;
+            color: var(--primary-hover);
         }
 
         .order-card.done .order-queue {
-            color: #2ecc71;
+            color: var(--success);
         }
 
         .order-status {
-            font-size: 0.75rem;
-            padding: 3px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-weight: bold;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
         }
 
         .status-new {
-            background: #e94560;
-            color: white;
+            background: var(--primary-soft);
+            color: var(--primary-hover);
+            border: 1px solid var(--primary);
         }
 
         .status-done {
-            background: #2ecc71;
-            color: #1a1a2e;
+            background: rgba(46, 204, 113, 0.14);
+            color: var(--success);
+            border: 1px solid var(--success);
         }
 
         /* Egy étel sor a rendelésen belül */
@@ -442,9 +586,9 @@
             justify-content: space-between;
             align-items: baseline;
             flex-wrap: wrap;
-            font-size: 1.2rem;
-            padding: 4px 0;
-            border-bottom: 1px solid #2a2a4e;
+            font-size: 1.1rem;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
         }
 
         .order-item-line .order-item-note {
@@ -456,53 +600,64 @@
         }
 
         .order-item-note {
-            color: #a0a0b0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
             font-size: 0.78rem;
             font-style: italic;
         }
 
         .order-item-price {
-            color: #a0a0b0;
+            font-family: var(--font-display);
+            color: var(--gold);
             font-size: 0.9rem;
-            font-weight: normal;
+            font-weight: 500;
         }
 
         /* Rendelés végösszege az order kártyán */
         .order-total {
             display: flex;
             justify-content: space-between;
-            font-weight: bold;
+            font-weight: 700;
             padding: 8px 0 4px;
             margin-top: 4px;
-            border-top: 1px solid #2a2a4e;
+            border-top: 1px solid var(--border);
         }
 
         .order-total span:last-child {
-            color: #e94560;
+            font-family: var(--font-display);
+            color: var(--gold);
         }
 
         /* Törlés gomb a rendelés kártyán */
         .delete-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
             background: none;
-            border: 1px solid #e94560;
-            border-radius: 6px;
-            color: #e94560;
-            padding: 4px 10px;
-            font-size: 1.2rem;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            padding: 8px 10px;
+            font-size: 0.85rem;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 10px;
             transition: all 0.15s;
         }
 
         .delete-btn:hover {
-            background: #e94560;
-            color: white;
+            background: var(--danger-soft);
+            border-color: var(--danger);
+            color: var(--danger);
         }
 
         /* Ha nincs rendelés */
         .empty-state {
             text-align: center;
-            color: #606080;
+            color: var(--text-faint);
             padding: 40px 20px;
             font-size: 0.9rem;
         }
@@ -512,50 +667,37 @@
         ============================================================ */
         .stats-btn {
             width: 100%;
-            background: #0f3460;
-            border: 1px solid #1a4a7a;
-            border-radius: 8px;
-            color: #a0a0b0;
-            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            padding: 11px;
             cursor: pointer;
             font-size: 0.85rem;
+            font-weight: 500;
             margin-top: 10px;
             transition: all 0.15s;
         }
 
         .stats-btn:hover {
-            border-color: #e94560;
-            color: white;
-        }
-
-        /* Beállítások gomb - ugyanaz a stílus, mint a statisztika gombé */
-        .settings-btn {
-            width: 100%;
-            background: #0f3460;
-            border: 1px solid #1a4a7a;
-            border-radius: 8px;
-            color: #a0a0b0;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            transition: all 0.15s;
-        }
-
-        .settings-btn:hover {
-            border-color: #e94560;
-            color: white;
+            border-color: var(--primary);
+            color: var(--primary-hover);
         }
 
         /* ============================================================
-           MODAL (felugró ablak) - Statisztikához
+           MODAL (felugró ablak) - Statisztikához és Beállításokhoz
         ============================================================ */
         .modal-overlay {
             display: none;          /* Alapesetben rejtett */
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(4, 4, 7, 0.75);
+            backdrop-filter: blur(3px);
             z-index: 200;
             align-items: center;
             justify-content: center;
@@ -567,50 +709,69 @@
         }
 
         .modal {
-            background: #16213e;
-            border-radius: 14px;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-lg);
             padding: 24px;
             width: 90%;
             max-width: 400px;
-            border: 1px solid #e94560;
+            border: 1px solid var(--border-strong);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .modal h2 {
-            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: var(--font-display);
+            color: var(--primary-hover);
             margin-bottom: 16px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
         }
 
         .stat-row {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
-            border-bottom: 1px solid #2a2a4e;
+            border-bottom: 1px solid var(--border);
             font-size: 0.9rem;
         }
 
         .stat-row:last-child { border-bottom: none; }
-        .stat-value { font-weight: bold; color: #e94560; }
+        .stat-value {
+            font-family: var(--font-display);
+            font-weight: 700;
+            color: var(--gold);
+        }
 
         .modal-close {
             width: 100%;
-            background: #e94560;
-            border: none;
-            border-radius: 8px;
-            color: white;
+            background: var(--bg-elevated-2);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            color: var(--text);
             padding: 12px;
             cursor: pointer;
             margin-top: 16px;
             font-size: 0.95rem;
+            transition: all 0.15s;
+        }
+
+        .modal-close:hover {
+            border-color: var(--primary);
+            color: var(--primary-hover);
         }
 
         /* Napi statisztika nullázása gomb – visszafogottabb, mint a Bezárás */
         .reset-stats-btn {
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             background: none;
-            border: 1px solid #e94560;
-            border-radius: 8px;
-            color: #e94560;
+            border: 1px solid var(--danger);
+            border-radius: var(--radius-sm);
+            color: var(--danger);
             padding: 10px;
             cursor: pointer;
             margin-top: 16px;
@@ -619,8 +780,7 @@
         }
 
         .reset-stats-btn:hover {
-            background: #e94560;
-            color: white;
+            background: var(--danger-soft);
         }
 
         /* ============================================================
@@ -632,62 +792,83 @@
             gap: 8px;
             margin-bottom: 16px;
             padding-bottom: 16px;
-            border-bottom: 1px solid #2a2a4e;
+            border-bottom: 1px solid var(--border);
         }
 
         .add-item-form input {
             width: 100%;
-            background: #1a1a2e;
-            border: 1px solid #2a2a4e;
-            border-radius: 6px;
-            color: #eaeaea;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
             font-size: 0.9rem;
             padding: 10px;
         }
 
+        .add-item-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
         .add-item-form input::placeholder {
-            color: #606080;
+            color: var(--text-faint);
         }
 
         .add-item-btn {
             width: 100%;
-            background: #2ecc71;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--success);
             border: none;
-            border-radius: 8px;
-            color: #1a1a2e;
-            font-weight: bold;
+            border-radius: var(--radius-sm);
+            color: #0a1f14;
+            font-weight: 700;
             padding: 10px;
             cursor: pointer;
             font-size: 0.9rem;
+            transition: background 0.15s;
         }
 
         .add-item-btn:hover {
-            background: #27ae60;
+            background: var(--success-strong);
         }
 
         .menu-manage-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #2a2a4e;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border);
             font-size: 0.9rem;
         }
 
         .menu-manage-row:last-child { border-bottom: none; }
 
         .menu-manage-price {
-            color: #a0a0b0;
+            font-family: var(--font-display);
+            color: var(--gold);
             margin-right: 10px;
+            font-weight: 600;
         }
 
         .menu-manage-delete {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: none;
             border: none;
-            color: #e94560;
+            color: var(--text-faint);
             cursor: pointer;
-            font-size: 1.1rem;
-            padding: 0 4px;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .menu-manage-delete:hover {
+            color: var(--danger);
+            background: var(--danger-soft);
         }
     </style>
 </head>
@@ -695,8 +876,16 @@
 
 <!-- FEJLÉC -->
 <header>
-    <h1>🍔 PÉNZTÁR</h1>
-    <span class="order-count" id="orderCount">0 rendelés</span>
+    <div class="header-title">
+        <span data-icon="bag" data-icon-size="20"></span>
+        <h1>PÉNZTÁR</h1>
+    </div>
+    <div class="header-actions">
+        <span class="order-count" id="orderCount">0 rendelés</span>
+        <button class="icon-btn" onclick="openSettings()" aria-label="Étlap beállítása" title="Étlap beállítása">
+            <span data-icon="gear" data-icon-size="20"></span>
+        </button>
+    </div>
 </header>
 
 <!-- FŐ ELRENDEZÉS -->
@@ -709,7 +898,7 @@
 
         <!-- Pager sorszám választó (16 gomb) -->
         <div class="order-header">
-            <label>🔔 PAGER SORSZÁM – válassz egyet</label>
+            <label><span data-icon="bell" data-icon-size="14"></span> Pager sorszám – válassz egyet</label>
             <div class="pager-grid">
                 <!-- Array.from({length: 16}) → létrehoz egy 16 elemű tömböt
                      Ebből generáljuk a 16 gombot JavaScript-tel -->
@@ -722,20 +911,20 @@
         <!--
           MENÜ GOMBOK
           =============================================================
-          Az étlap mostantól a Firebase "menu" ágából töltődik be
-          (lásd renderMenu() a JS részben), NEM itt van hardkódolva.
+          Az étlap a Firebase "menu" ágából töltődik be (lásd renderMenu()
+          a JS részben), NEM itt van hardkódolva.
 
-          Új tétel felvétele / meglévő törlése: jobb panel →
-          "⚙️ Étlap beállítása" gomb.
+          Új tétel felvétele / meglévő törlése: a fejléc fogaskerék
+          ikonja → Étlap beállítása.
           =============================================================
         -->
 
-        <p class="category-title">🍔 Kaják</p>
+        <p class="category-title">Kaják</p>
         <div class="menu-grid" id="menuGrid"></div>
 
         <!-- KOSÁR: az összerakott rendelés -->
         <div class="cart-section">
-            <h3>🛒 Aktuális rendelés</h3>
+            <h3><span data-icon="cart" data-icon-size="16"></span> Aktuális rendelés</h3>
             <!-- ide kerülnek a kosár tételek JavaScript-ből -->
             <div id="cartItems"></div>
             <div class="cart-total" id="cartTotal"></div>
@@ -743,7 +932,7 @@
 
         <!-- Küldés gomb -->
         <button class="send-btn" id="sendBtn" onclick="sendOrder()">
-            📤 RENDELÉS KÜLDÉSE
+            <span data-icon="send" data-icon-size="18"></span> RENDELÉS KÜLDÉSE
         </button>
 
     </div>
@@ -752,19 +941,14 @@
          JOBB PANEL: AKTÍV RENDELÉSEK LISTÁJA
     ============================================================ -->
     <div class="right-panel">
-        <p class="panel-title">📋 Aktív rendelések</p>
+        <p class="panel-title"><span data-icon="clipboardList" data-icon-size="16"></span> Aktív rendelések</p>
 
         <!-- ide kerülnek a rendelés kártyák JavaScript-ből -->
         <div id="ordersList"></div>
 
         <!-- Napi statisztika gomb -->
         <button class="stats-btn" onclick="showStats()">
-            📊 Napi statisztika megtekintése
-        </button>
-
-        <!-- Étlap beállítása gomb -->
-        <button class="settings-btn" onclick="openSettings()">
-            ⚙️ Étlap beállítása
+            <span data-icon="chart" data-icon-size="16"></span> Napi statisztika megtekintése
         </button>
     </div>
 
@@ -775,9 +959,9 @@
 ============================================================ -->
 <div class="modal-overlay" id="statsModal">
     <div class="modal">
-        <h2>📊 Mai nap statisztikája</h2>
+        <h2><span data-icon="chart" data-icon-size="18"></span> Mai nap statisztikája</h2>
         <div id="statsContent"></div>
-        <button class="reset-stats-btn" onclick="resetStats()">🗑️ Statisztika nullázása</button>
+        <button class="reset-stats-btn" onclick="resetStats()"><span data-icon="trash" data-icon-size="16"></span> Statisztika nullázása</button>
         <button class="modal-close" onclick="closeStats()">Bezárás</button>
     </div>
 </div>
@@ -787,12 +971,12 @@
 ============================================================ -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>⚙️ Étlap beállítása</h2>
+        <h2><span data-icon="gear" data-icon-size="18"></span> Étlap beállítása</h2>
 
         <div class="add-item-form">
             <input type="text" id="newItemName" placeholder="Étel neve (pl. Sajtos Pita)" maxlength="59" />
             <input type="number" id="newItemPrice" placeholder="Ár (din)" min="0" max="100000" />
-            <button class="add-item-btn" onclick="addMenuItem()">➕ Hozzáadás az étlaphoz</button>
+            <button class="add-item-btn" onclick="addMenuItem()"><span data-icon="plus" data-icon-size="16"></span> Hozzáadás az étlaphoz</button>
         </div>
 
         <div id="menuManageList"></div>
@@ -820,7 +1004,7 @@
     // ============================================================
     // KEZDETI ÉTLAP – csak akkor kerül fel a Firebase "menu" ágába,
     // ha az még teljesen üres (első indításkor). Utána az étlapot
-    // kizárólag a "⚙️ Étlap beállítása" modal kezeli.
+    // kizárólag az Étlap beállítása modal kezeli.
     // ============================================================
     const DEFAULT_MENU_ITEMS = {
         "Dupli Cheeseburger": 2200,
@@ -918,7 +1102,7 @@
 
         const items = Object.values(menuItems);
         if (items.length === 0) {
-            grid.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs felvéve étlap tétel. Add hozzá a "⚙️ Étlap beállítása" menüben!</p>';
+            grid.innerHTML = '<p style="color:var(--text-faint);font-size:0.85rem;">Még nincs felvéve étlap tétel. Add hozzá a fejléc fogaskerék ikonjával!</p>';
             return;
         }
 
@@ -934,6 +1118,8 @@
             document.querySelectorAll(`.menu-btn[data-name="${cartItem.name}"]`)
                 .forEach(btn => btn.classList.add("in-cart"));
         });
+
+        hydrateIcons();
     }
 
 
@@ -970,7 +1156,7 @@
 
         // Ha üres a kosár
         if (cart.length === 0) {
-            container.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs tétel a kosárban.</p>';
+            container.innerHTML = '<p style="color:var(--text-faint);font-size:0.85rem;">Még nincs tétel a kosárban.</p>';
             document.getElementById("cartTotal").innerHTML = "";
             // Menü gombok visszaállítása (egyik sem kiemelve)
             document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("in-cart"));
@@ -990,7 +1176,7 @@
         <div class="cart-item">
           <div class="cart-item-header">
             <span class="cart-item-name">${item.name}</span>
-            <button class="remove-item-btn" onclick="removeFromCart(${index})">✕</button>
+            <button class="remove-item-btn" onclick="removeFromCart(${index})" aria-label="Tétel eltávolítása" data-icon="close" data-icon-size="14"></button>
           </div>
 
           <div class="cart-item-header">
@@ -1022,6 +1208,8 @@
         <span>Végösszeg:</span>
         <span>${total} din</span>
       `;
+
+        hydrateIcons();
     }
 
 
@@ -1159,7 +1347,7 @@
             <div class="order-card-header">
               <span class="order-queue">#${order.queue}</span>
               <span class="order-status ${isDone ? 'status-done' : 'status-new'}">
-                ${isDone ? '✅ KÉSZ' : '🔴 ÚJ'}
+                ${isDone ? icon('checkCircle', 13) + ' KÉSZ' : '<span class="status-dot"></span> ÚJ'}
               </span>
             </div>
 
@@ -1168,7 +1356,7 @@
               <div class="order-item-line">
                 <strong>${item.qty}× ${item.name}</strong>
                 <span class="order-item-price">${(item.price || 0) * item.qty} din</span>
-                ${item.note ? `<div class="order-item-note">📝 ${item.note}</div>` : ''}
+                ${item.note ? `<div class="order-item-note">${icon('pencil', 12)} ${item.note}</div>` : ''}
               </div>
             `).join("")}
 
@@ -1180,11 +1368,13 @@
 
             <!-- Törlés gomb (csak a pénztáros tableten van) -->
             <button class="delete-btn" onclick="deleteOrder('${id}')">
-              🗑️ Rendelés törlése
+              <span data-icon="trash" data-icon-size="14"></span> Rendelés törlése
             </button>
           </div>
         `;
         }).join("");
+
+        hydrateIcons();
     }
 
 
@@ -1263,13 +1453,13 @@
           <span>Ebből teljesített:</span>
           <span class="stat-value">${doneCount} db</span>
         </div>
-        <p style="color:#a0a0b0;font-size:0.75rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">
+        <p style="color:var(--text-muted);font-size:0.75rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">
           Eladott ételek
         </p>
       `;
 
         if (sorted.length === 0) {
-            html += '<p style="color:#606080;font-size:0.85rem;">Ma még nincs rendelés.</p>';
+            html += '<p style="color:var(--text-faint);font-size:0.85rem;">Ma még nincs rendelés.</p>';
         } else {
             sorted.forEach(([name, count]) => {
                 html += `
@@ -1322,19 +1512,21 @@
 
         const entries = Object.entries(menuItems);
         if (entries.length === 0) {
-            container.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs felvéve étlap tétel.</p>';
+            container.innerHTML = '<p style="color:var(--text-faint);font-size:0.85rem;">Még nincs felvéve étlap tétel.</p>';
             return;
         }
 
         container.innerHTML = entries.map(([id, item]) => `
         <div class="menu-manage-row">
           <span>${item.name}</span>
-          <span>
+          <span style="display:flex;align-items:center;">
             <span class="menu-manage-price">${item.price} din</span>
-            <button class="menu-manage-delete" onclick="deleteMenuItem('${id}')">✕</button>
+            <button class="menu-manage-delete" onclick="deleteMenuItem('${id}')" aria-label="Tétel törlése" data-icon="close" data-icon-size="14"></button>
           </span>
         </div>
       `).join("");
+
+        hydrateIcons();
     }
 
     // Új tétel felvétele az étlapra a Beállítások modal formjából
@@ -1386,6 +1578,7 @@
     // Kezdeti renderelés (oldal betöltésekor)
     renderPagerButtons();  // 16 pager gomb megjelenítése
     renderCart();          // Üres kosár megjelenítése
+    hydrateIcons();         // Statikus fejléc/gomb ikonok kirajzolása
 </script>
 </body>
 </html>

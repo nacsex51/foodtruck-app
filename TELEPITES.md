@@ -91,8 +91,9 @@ A legegyszerűbb ingyenes lehetőség: **GitHub Pages**.
 ## 6. LÉPÉS: Menü testreszabása
 
 Az étlapot mostantól **nem kell kódban szerkeszteni** – a pénztáros
-tableten (`index.html`) a jobb oldali panelen található **"⚙️ Étlap
-beállítása"** gombra kattintva nyílik egy felugró ablak:
+tableten (`index.html`) a fejlécben (jobb felső sarok, a rendelésszám
+mellett) található **fogaskerék ikonra** kattintva nyílik egy felugró
+ablak:
 
 - **Új tétel felvétele:** írd be az étel nevét és az árát (din), majd
   kattints a **"➕ Hozzáadás az étlaphoz"** gombra – a tétel azonnal
