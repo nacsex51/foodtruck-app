@@ -57,6 +57,15 @@ foodtruck-app/
 }
 ```
 
+**`menu`** – az étlap (eladható tételek + áraik), 2026-07-03 óta (lásd napló),
+kulcs = Firebase-generált egyedi ID:
+```javascript
+{
+  "-Nab...": { name: "Cheeseburger", price: 1800 },
+  "-Nac...": { name: "Pomfrit", price: 900 }
+}
+```
+
 ### Pénztáros oldal (`index.html`) működése
 
 1. **Pager kiválasztása** – 16 gomb (1–16). Foglalt pagerek (amiknek van
@@ -85,6 +94,15 @@ foodtruck-app/
    - **"🗑️ Statisztika nullázása" gomb**: megerősítés után nullázza a
      tárolt statisztikát (`dailyStats.set({orderCount:0, doneCount:0,
      items:{}})`); az aktív rendeléseket nem érinti
+6. **Étlap beállítása modal** (`⚙️ Étlap beállítása`, 2026-07-03 óta):
+   - új tétel felvétele: név + ár (din) megadása után "➕ Hozzáadás az
+     étlaphoz" → `menuRef.push({name, price})`; kliensoldali validáció
+     (nem üres név, 0–100000 közti ár, nincs már ilyen nevű tétel)
+   - meglévő tétel törlése: a listában lévő ✕ gomb, megerősítés után
+     `menuRef.child(id).remove()`
+   - az étlap (`menuGrid`) és ez a lista is valós időben frissül
+     (`menuRef.on("value", ...)`), így ha valaki hozzáad egy tételt, az
+     azonnal megjelenik minden nyitva lévő lapon
 
 ### Szakács oldal (`kitchen.html`) működése
 
@@ -102,11 +120,15 @@ foodtruck-app/
 
 ### Menü (jelenlegi tételek) és árak
 
-Az árak (din) a `MENU_PRICES` objektumban (`index.html`) vannak
-megadva – ezek egyelőre becsült, kerekített árak, nem kell pontosnak
-lenniük, bármikor módosíthatók.
+2026-07-03 óta az étlap **nem a kódban van hardkódolva**, hanem a
+Firebase `menu` ágában, és a pénztáros oldalon az "⚙️ Étlap beállítása"
+menüből szerkeszthető (lásd fent, "Pénztáros oldal működése" 6. pont).
+Az alábbi táblázat az induláskor egyszer automatikusan feltöltött
+kezdő tételeket mutatja (`DEFAULT_MENU_ITEMS` konstans, `index.html`)
+– ezek onnantól ugyanúgy törölhetők/módosíthatók a Beállítások
+menüből, mint bármelyik később felvett tétel.
 
-| Tétel | Ár |
+| Tétel | Kezdő ár |
 |---|---|
 | Dupli Cheeseburger | 2200 din |
 | Cheeseburger | 1800 din |
@@ -117,8 +139,7 @@ lenniük, bármikor módosíthatók.
 | Pljeskavica | 2000 din |
 | Pomfrit | 900 din |
 
-Bővítés: `TELEPITES.md` "6. LÉPÉS" pontja leírja, hogyan kell új
-tételt/kategóriát felvenni az `index.html`-ben.
+Bővítés: `TELEPITES.md` "6. LÉPÉS" pontja leírja az új munkafolyamatot.
 
 ### Technológia
 
@@ -294,3 +315,58 @@ utána azonnal töröltem, az éles adatbázis tiszta maradt.
 rendelések tételei és végösszege) "din"-re cserélve. Csak
 megjelenítési/szöveg-csere, a `MENU_PRICES` értékek és a számítási
 logika változatlan.
+
+### 2026-07-03 – Étlap tétel hozzáadása/törlése Beállítások menüből
+
+**Igény:** ne kelljen kódot szerkeszteni ahhoz, hogy új eladási tételt
+vegyenek fel az étlapra – a pénztáros tableten, egy Beállítások
+menüben lehessen kiválasztani/megadni az új tétel nevét és árát.
+
+**Megoldás – az étlap átköltözött Firebase-be:**
+- új `menu` Firebase-ág (`firebase-config.js`: `menuRef = db.ref("menu")`),
+  struktúra: `{ [push-ID]: { name, price } }`
+- `database.rules.json` (és a vele szinkronban tartott
+  `database-rules-COPY-EZT.txt`) kiegészítve egy `"menu"` validációs
+  blokkal, az `orders.items` mintáját követve (név: 1–59 karakteres
+  string, ár: 0–100000 közti szám)
+- `index.html`: a korábban hardkódolt 8 menügomb helyett dinamikus
+  `renderMenu()` rajzolja ki a gombokat a Firebase `menu` ág alapján;
+  `addToCart()` az árat mostantól innen nézi ki (a korábbi statikus
+  `MENU_PRICES` objektum helyett, ami `DEFAULT_MENU_ITEMS` néven csak
+  az egyszeri kezdő-feltöltéshez maradt meg)
+- **egyszeri seed logika**: app indításkor, ha a `menu` ág teljesen
+  üres, automatikusan feltöltődik a korábbi 8 tétellel – így a
+  meglévő étlap nem veszett el az átállással
+- új "⚙️ Étlap beállítása" modal (`openSettings()`/`closeSettings()`,
+  a napi statisztika modal mintájára): tétel hozzáadása név+ár
+  megadásával (`addMenuItem()`, kliensoldali validáció: nem üres név,
+  0–100000 közti ár, nincs már ilyen nevű tétel), meglévő tétel
+  törlése (`deleteMenuItem()`, megerősítés után)
+- `TELEPITES.md` "6. LÉPÉS" átírva az új, kódszerkesztés nélküli
+  munkafolyamatra
+
+**Fontos, kézi teendő élesítéskor:** a `database.rules.json` frissült
+tartalmát be kell másolni a Firebase Console → Realtime Database →
+Rules fülre és publikálni (ugyanúgy, mint eddig minden szabály-
+változásnál, lásd `TELEPITES.md` 7b lépése) – enélkül a `menu` ágra
+írás `permission_denied` hibával elutasításra kerül. Ezt tesztelés
+közben meg is erősítettem: publikálás előtt a hozzáadás/törlés
+egyértelmű hibaüzenettel ("Hiba a tétel hozzáadása során: ...")
+elutasításra kerül, de az app nem omlik össze.
+
+**Tesztelés:** helyi statikus szerveren (preview). A kattintás-alapú
+szimuláció ebben a preview-környezetben nem váltotta ki a natív
+`onclick` kezelőket (feltehetően a preview eszköz egy korlátja, nem
+kódhiba – az azonos DOM-eseménykezelőket közvetlen függvényhívással és
+`fill`-lel sikerült tesztelni), ezért a tényleges felhasználói
+kattintás-folyamat a `menu` szabályok publikálása után, az éles
+Firebase adatbázis ellen még egyszer ellenőrzendő. Amit így is sikerült
+igazolni: a Beállítások modal nyit/zár, a form validáció (üres név,
+érvénytelen ár, duplikált név) helyesen blokkol, sikeres hozzáadás
+esetén a `menuRef.push()` a várt hibaágon landol (mert a szabály még
+nincs publikálva), a dinamikus `renderMenu()` helyesen rajzolja ki a
+gombokat és árakat szimulált `menuItems` adatból, a kosárba tevés
+(`addToCart`) a dinamikus étlapból nézi ki a helyes árat, a kosár
+végösszege és az "in-cart" kiemelés is helyesen frissül. Élő
+adatbázisba írás nem történt (a `permission_denied` miatt), így
+takarítanivaló sem maradt.

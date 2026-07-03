@@ -90,28 +90,20 @@ A legegyszerűbb ingyenes lehetőség: **GitHub Pages**.
 
 ## 6. LÉPÉS: Menü testreszabása
 
-Az `index.html` fájlban keresd meg ezt a részt:
+Az étlapot mostantól **nem kell kódban szerkeszteni** – a pénztáros
+tableten (`index.html`) a jobb oldali panelen található **"⚙️ Étlap
+beállítása"** gombra kattintva nyílik egy felugró ablak:
 
-```html
-<p class="category-title">🍔 Fő fogások</p>
-<div class="menu-grid">
-  <button class="menu-btn" onclick="addToCart('Hamburger')">Hamburger</button>
-  ...
-</div>
-```
+- **Új tétel felvétele:** írd be az étel nevét és az árát (din), majd
+  kattints a **"➕ Hozzáadás az étlaphoz"** gombra – a tétel azonnal
+  megjelenik az étlapon, mindkét tableten (illetve minden nyitott lapon).
+- **Tétel törlése:** a listában minden tétel mellett van egy ✕ gomb.
 
-**Ételek hozzáadása/cseréje:**
-- Egyszerűen módosítsd az `addToCart('...')` szövegét
-- A gomb felirata és az ételek neve ugyanaz kell legyen
-
-**Új kategória hozzáadása:**
-```html
-<p class="category-title">🥗 Saláták</p>
-<div class="menu-grid">
-  <button class="menu-btn" onclick="addToCart('Görög saláta')">Görög saláta</button>
-  <button class="menu-btn" onclick="addToCart('Caesar saláta')">Caesar saláta</button>
-</div>
-```
+Az étlap a Firebase adatbázis `menu` ágában tárolódik, ezért valós
+időben szinkronban van minden eszközön, és a böngésző bezárása után is
+megmarad. Első indításkor, ha az étlap még teljesen üres, a rendszer
+egyszeri jelleggel feltölti az alapértelmezett tételekkel (lásd
+`FEJLESZTESI_NAPLO.md`).
 
 ---
 

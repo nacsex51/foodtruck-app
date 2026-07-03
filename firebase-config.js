@@ -36,3 +36,7 @@ const ordersRef = db.ref("orders");
 // gombbal ürül ki – független az "orders" lista tartalmától,
 // így törölt rendelések után is helyes marad az összesítés)
 const statsRef = db.ref("dailyStats");
+
+// Az étlap (eladható tételek + áraik) tárolási helye az adatbázisban.
+// A ⚙️ Beállítások menüből lehet ide új tételt felvenni vagy meglévőt törölni.
+const menuRef = db.ref("menu");

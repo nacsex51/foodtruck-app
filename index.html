@@ -528,6 +528,25 @@
             color: white;
         }
 
+        /* Beállítások gomb - ugyanaz a stílus, mint a statisztika gombé */
+        .settings-btn {
+            width: 100%;
+            background: #0f3460;
+            border: 1px solid #1a4a7a;
+            border-radius: 8px;
+            color: #a0a0b0;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            transition: all 0.15s;
+        }
+
+        .settings-btn:hover {
+            border-color: #e94560;
+            color: white;
+        }
+
         /* ============================================================
            MODAL (felugró ablak) - Statisztikához
         ============================================================ */
@@ -603,6 +622,73 @@
             background: #e94560;
             color: white;
         }
+
+        /* ============================================================
+           MODAL - Beállítások (étlap tétel hozzáadása/törlése)
+        ============================================================ */
+        .add-item-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #2a2a4e;
+        }
+
+        .add-item-form input {
+            width: 100%;
+            background: #1a1a2e;
+            border: 1px solid #2a2a4e;
+            border-radius: 6px;
+            color: #eaeaea;
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+
+        .add-item-form input::placeholder {
+            color: #606080;
+        }
+
+        .add-item-btn {
+            width: 100%;
+            background: #2ecc71;
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: bold;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .add-item-btn:hover {
+            background: #27ae60;
+        }
+
+        .menu-manage-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a4e;
+            font-size: 0.9rem;
+        }
+
+        .menu-manage-row:last-child { border-bottom: none; }
+
+        .menu-manage-price {
+            color: #a0a0b0;
+            margin-right: 10px;
+        }
+
+        .menu-manage-delete {
+            background: none;
+            border: none;
+            color: #e94560;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+        }
     </style>
 </head>
 <body>
@@ -636,54 +722,16 @@
         <!--
           MENÜ GOMBOK
           =============================================================
-          ITT KELL MAJD MÓDOSÍTANI A SAJÁT MENÜDDEL!
+          Az étlap mostantól a Firebase "menu" ágából töltődik be
+          (lásd renderMenu() a JS részben), NEM itt van hardkódolva.
 
-          Struktúra:
-          - <p class="category-title"> → kategória neve
-          - <div class="menu-grid"> → gombokhoz rács elrendezés
-          - <button class="menu-btn" onclick="addToCart('Étel neve')">
-              Étel neve
-            </button>
-
-          Annyi gombot és kategóriát csinálhatsz, amennyit szeretnél.
+          Új tétel felvétele / meglévő törlése: jobb panel →
+          "⚙️ Étlap beállítása" gomb.
           =============================================================
         -->
 
         <p class="category-title">🍔 Kaják</p>
-        <div class="menu-grid">
-            <button class="menu-btn" data-name="Dupli Cheeseburger" onclick="addToCart('Dupli Cheeseburger')">
-                <span class="menu-btn-name">Dupli Cheeseburger</span>
-                <span class="menu-btn-price">2200 din</span>
-            </button>
-            <button class="menu-btn" data-name="Cheeseburger" onclick="addToCart('Cheeseburger')">
-                <span class="menu-btn-name">Cheeseburger</span>
-                <span class="menu-btn-price">1800 din</span>
-            </button>
-            <button class="menu-btn" data-name="Gyros Pita" onclick="addToCart('Gyros Pita')">
-                <span class="menu-btn-name">Gyros Pita</span>
-                <span class="menu-btn-price">1900 din</span>
-            </button>
-            <button class="menu-btn" data-name="Gyros Box" onclick="addToCart('Gyros Box')">
-                <span class="menu-btn-name">Gyros Box</span>
-                <span class="menu-btn-price">2400 din</span>
-            </button>
-            <button class="menu-btn" data-name="Pulled Pork" onclick="addToCart('Pulled Pork')">
-                <span class="menu-btn-name">Pulled Pork</span>
-                <span class="menu-btn-price">2300 din</span>
-            </button>
-            <button class="menu-btn" data-name="Pulled Chicken" onclick="addToCart('Pulled Chicken')">
-                <span class="menu-btn-name">Pulled Chicken</span>
-                <span class="menu-btn-price">2100 din</span>
-            </button>
-            <button class="menu-btn" data-name="Pljeskavica" onclick="addToCart('Pljeskavica')">
-                <span class="menu-btn-name">Pljeskavica</span>
-                <span class="menu-btn-price">2000 din</span>
-            </button>
-            <button class="menu-btn" data-name="Pomfrit" onclick="addToCart('Pomfrit')">
-                <span class="menu-btn-name">Pomfrit</span>
-                <span class="menu-btn-price">900 din</span>
-            </button>
-        </div>
+        <div class="menu-grid" id="menuGrid"></div>
 
         <!-- KOSÁR: az összerakott rendelés -->
         <div class="cart-section">
@@ -713,6 +761,11 @@
         <button class="stats-btn" onclick="showStats()">
             📊 Napi statisztika megtekintése
         </button>
+
+        <!-- Étlap beállítása gomb -->
+        <button class="settings-btn" onclick="openSettings()">
+            ⚙️ Étlap beállítása
+        </button>
     </div>
 
 </div>
@@ -726,6 +779,25 @@
         <div id="statsContent"></div>
         <button class="reset-stats-btn" onclick="resetStats()">🗑️ Statisztika nullázása</button>
         <button class="modal-close" onclick="closeStats()">Bezárás</button>
+    </div>
+</div>
+
+<!-- ============================================================
+     BEÁLLÍTÁSOK MODAL (felugró ablak) - étlap tétel hozzáadása/törlése
+============================================================ -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+        <h2>⚙️ Étlap beállítása</h2>
+
+        <div class="add-item-form">
+            <input type="text" id="newItemName" placeholder="Étel neve (pl. Sajtos Pita)" maxlength="59" />
+            <input type="number" id="newItemPrice" placeholder="Ár (din)" min="0" max="100000" />
+            <button class="add-item-btn" onclick="addMenuItem()">➕ Hozzáadás az étlaphoz</button>
+        </div>
+
+        <div id="menuManageList"></div>
+
+        <button class="modal-close" onclick="closeSettings()">Bezárás</button>
     </div>
 </div>
 
@@ -743,12 +815,14 @@
     let orders = {};
     let selectedQueue = null;  // A kiválasztott pager sorszáma (1-16)
     let dailyStats = { orderCount: 0, doneCount: 0, items: {} };  // Tartósan tárolt napi statisztika
+    let menuItems = {};  // Az étlap Firebase-ből: { itemId: { name, price } }
 
     // ============================================================
-    // ÁRLISTA (din) – egyelőre becsült árak, nem kell pontosnak lenniük.
-    // Az étel neve alapján keressük ki az árát mindenhol.
+    // KEZDETI ÉTLAP – csak akkor kerül fel a Firebase "menu" ágába,
+    // ha az még teljesen üres (első indításkor). Utána az étlapot
+    // kizárólag a "⚙️ Étlap beállítása" modal kezeli.
     // ============================================================
-    const MENU_PRICES = {
+    const DEFAULT_MENU_ITEMS = {
         "Dupli Cheeseburger": 2200,
         "Cheeseburger": 1800,
         "Gyros Pita": 1900,
@@ -833,6 +907,37 @@
 
 
     // ============================================================
+    // ÉTLAP GOMBOK GENERÁLÁSA
+    // A menuItems (Firebase "menu" ág) alapján rajzolja ki a
+    // menügombokat. Lefut minden real-time frissüléskor is, hogy az
+    // étlap mindkét tableten (illetve minden nyitott lapon) azonnal
+    // frissüljön, ha valaki hozzáad vagy töröl egy tételt.
+    // ============================================================
+    function renderMenu() {
+        const grid = document.getElementById("menuGrid");
+
+        const items = Object.values(menuItems);
+        if (items.length === 0) {
+            grid.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs felvéve étlap tétel. Add hozzá a "⚙️ Étlap beállítása" menüben!</p>';
+            return;
+        }
+
+        grid.innerHTML = items.map(item => `
+        <button class="menu-btn" data-name="${item.name}" onclick="addToCart('${item.name.replace(/'/g, "\\'")}')">
+            <span class="menu-btn-name">${item.name}</span>
+            <span class="menu-btn-price">${item.price} din</span>
+        </button>
+      `).join("");
+
+        // A kosárban lévő tételek kiemelése (pl. étlap-frissítés után is)
+        cart.forEach(cartItem => {
+            document.querySelectorAll(`.menu-btn[data-name="${cartItem.name}"]`)
+                .forEach(btn => btn.classList.add("in-cart"));
+        });
+    }
+
+
+    // ============================================================
     // ÉTEL HOZZÁADÁSA A KOSÁRHOZ
     // Ezt hívja meg minden menü gomb kattintáskor.
     // ============================================================
@@ -840,12 +945,15 @@
         // Megnézzük, hogy az étel már szerepel-e a kosárban
         const existing = cart.find(i => i.name === itemName);
 
+        // Az árat a jelenlegi étlapból (menuItems) keressük ki
+        const menuItem = Object.values(menuItems).find(i => i.name === itemName);
+
         if (existing) {
             // Ha már benne van, növeljük a mennyiségét
             existing.qty += 1;
         } else {
-            // Ha még nincs benne, hozzáadjuk (az árát az árlistából vesszük)
-            cart.push({ name: itemName, qty: 1, note: "", price: MENU_PRICES[itemName] || 0 });
+            // Ha még nincs benne, hozzáadjuk (az árát az étlapból vesszük)
+            cart.push({ name: itemName, qty: 1, note: "", price: menuItem ? menuItem.price : 0 });
         }
 
         // Frissítjük a kosár megjelenítést
@@ -1108,6 +1216,28 @@
         statsRef.on("value", (snapshot) => {
             dailyStats = snapshot.val() || { orderCount: 0, doneCount: 0, items: {} };
         });
+
+        // Az étlapot (menu) is folyamatosan figyeljük, hogy real-time
+        // frissüljön minden nyitott lapon, ha valaki hozzáad/töröl egy
+        // tételt. Első indításkor, ha az ág teljesen üres, egyszeri
+        // jelleggel feltöltjük az alapértelmezett tételekkel.
+        menuRef.once("value").then((snapshot) => {
+            if (!snapshot.exists()) {
+                const seed = {};
+                Object.entries(DEFAULT_MENU_ITEMS).forEach(([name, price]) => {
+                    const key = menuRef.push().key;
+                    seed[key] = { name, price };
+                });
+                return menuRef.set(seed);
+            }
+        }).finally(() => {
+            menuRef.on("value", (snapshot) => {
+                menuItems = snapshot.val() || {};
+                renderMenu();
+                renderCart();               // árak/gombok újraszinkronizálása
+                renderMenuSettingsList();    // ha a beállítások modal nyitva van
+            });
+        });
     });
 
 
@@ -1170,6 +1300,87 @@
 
     function closeStats() {
         document.getElementById("statsModal").classList.remove("open");
+    }
+
+    // ============================================================
+    // ÉTLAP BEÁLLÍTÁSA (tétel hozzáadása / törlése)
+    // ============================================================
+    function openSettings() {
+        renderMenuSettingsList();
+        document.getElementById("settingsModal").classList.add("open");
+    }
+
+    function closeSettings() {
+        document.getElementById("settingsModal").classList.remove("open");
+    }
+
+    // Az étlap kezelő lista kirajzolása a Beállítások modalban
+    // (minden meglévő tétel neve, ára és egy törlés gomb).
+    function renderMenuSettingsList() {
+        const container = document.getElementById("menuManageList");
+        if (!container) return;  // a modal még nincs a DOM-ban (nem várt eset)
+
+        const entries = Object.entries(menuItems);
+        if (entries.length === 0) {
+            container.innerHTML = '<p style="color:#606080;font-size:0.85rem;">Még nincs felvéve étlap tétel.</p>';
+            return;
+        }
+
+        container.innerHTML = entries.map(([id, item]) => `
+        <div class="menu-manage-row">
+          <span>${item.name}</span>
+          <span>
+            <span class="menu-manage-price">${item.price} din</span>
+            <button class="menu-manage-delete" onclick="deleteMenuItem('${id}')">✕</button>
+          </span>
+        </div>
+      `).join("");
+    }
+
+    // Új tétel felvétele az étlapra a Beállítások modal formjából
+    function addMenuItem() {
+        const nameInput = document.getElementById("newItemName");
+        const priceInput = document.getElementById("newItemPrice");
+
+        const name = nameInput.value.trim();
+        const price = Number(priceInput.value);
+
+        if (!name) {
+            alert("Add meg az étel nevét!");
+            return;
+        }
+        if (!Number.isFinite(price) || price < 0 || price > 100000) {
+            alert("Adj meg egy érvényes árat (0 és 100000 din között)!");
+            return;
+        }
+
+        // Duplikáció elkerülése: figyelmeztetünk, ha már van ilyen nevű tétel
+        const alreadyExists = Object.values(menuItems).some(
+            item => item.name.toLowerCase() === name.toLowerCase()
+        );
+        if (alreadyExists) {
+            alert("Már van ilyen nevű tétel az étlapon!");
+            return;
+        }
+
+        menuRef.push({ name, price })
+            .then(() => {
+                nameInput.value = "";
+                priceInput.value = "";
+                nameInput.focus();
+            })
+            .catch(err => {
+                alert("Hiba a tétel hozzáadása során: " + err.message);
+            });
+    }
+
+    // Tétel törlése az étlapról (a Beállítások modal listájából)
+    function deleteMenuItem(itemId) {
+        const item = menuItems[itemId];
+        const name = item ? item.name : "ez a tétel";
+        if (!confirm(`Biztosan törlöd az étlapról: "${name}"?`)) return;
+
+        menuRef.child(itemId).remove();
     }
 
     // Kezdeti renderelés (oldal betöltésekor)
