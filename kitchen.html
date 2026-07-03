@@ -10,6 +10,7 @@
   <meta name="theme-color" content="#1a1a2e" />
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
@@ -530,28 +531,35 @@
     // ============================================================
     let isFirstLoad = true;  // Az első betöltésnél ne szóljon
 
-    ordersRef.on("value", (snapshot) => {
-      const newData = snapshot.val() || {};
+    // A listenert csak a névtelen bejelentkezés sikeres létrejötte után
+    // kapcsoljuk be – a security rules hitelesítést követelnek meg, enélkül
+    // a lekérdezés "permission denied" hibával elutasítódna.
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) return;
 
-      if (isFirstLoad) {
-        // Első betöltés: csak eltároljuk az ID-kat, nem szólunk
-        Object.keys(newData).forEach(id => knownOrderIds.add(id));
-        isFirstLoad = false;
-      } else {
-        // Következő frissítések: keresünk új rendeléseket
-        const incomingIds = Object.keys(newData);
-        const hasNewOrder = incomingIds.some(id => !knownOrderIds.has(id));
+      ordersRef.on("value", (snapshot) => {
+        const newData = snapshot.val() || {};
 
-        if (hasNewOrder) {
-          // Van új rendelés!
-          incomingIds.forEach(id => knownOrderIds.add(id));
-          playBeep();           // Hangjelzés
-          showNotification();   // Értesítő sáv
+        if (isFirstLoad) {
+          // Első betöltés: csak eltároljuk az ID-kat, nem szólunk
+          Object.keys(newData).forEach(id => knownOrderIds.add(id));
+          isFirstLoad = false;
+        } else {
+          // Következő frissítések: keresünk új rendeléseket
+          const incomingIds = Object.keys(newData);
+          const hasNewOrder = incomingIds.some(id => !knownOrderIds.has(id));
+
+          if (hasNewOrder) {
+            // Van új rendelés!
+            incomingIds.forEach(id => knownOrderIds.add(id));
+            playBeep();           // Hangjelzés
+            showNotification();   // Értesítő sáv
+          }
         }
-      }
 
-      orders = newData;
-      renderOrders();
+        orders = newData;
+        renderOrders();
+      });
     });
   </script>
 </body>

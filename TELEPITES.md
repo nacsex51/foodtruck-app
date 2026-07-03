@@ -26,9 +26,9 @@ foodtruck-app/
 1. A bal oldali menüben kattints: **"Build"** → **"Realtime Database"**
 2. Kattints: **"Create Database"**
 3. Válaszd a **legközelebbi szervert** (pl. `europe-west1`)
-4. **FONTOS:** Válaszd a **"Start in test mode"** opciót
-   - Ez azt jelenti, hogy bárki olvashat/írhat – de ez nekünk most jó,
-     mert a két tablet ugyanazon a hálózaton lesz
+4. Válaszd a **"Start in test mode"** opciót (ezt az induláshoz így kell
+   választani, de utána **kötelező** lezárni – lásd a **7. LÉPÉS**-t,
+   különben bárki az interneten közvetlenül hozzáférhet az adatbázishoz)
 5. Kattints: **"Enable"**
 
 ---
@@ -112,6 +112,44 @@ Az `index.html` fájlban keresd meg ezt a részt:
   <button class="menu-btn" onclick="addToCart('Caesar saláta')">Caesar saláta</button>
 </div>
 ```
+
+---
+
+## 7. LÉPÉS: Biztonság – hozzáférés lezárása (kötelező!)
+
+A "test mode" (2. LÉPÉS) azt jelenti, hogy **bárki, aki ismeri a
+databaseURL-t, közvetlen HTTP kéréssel (pl. `curl`) olvashatja vagy
+írhatja az adatbázist** – akár hamis rendeléseket is beküldhet, anélkül
+hogy megnyitná az appot. Ezt zárja le ez a két lépés. A kód már
+tartalmazza a szükséges változtatásokat (`firebase-config.js`,
+`index.html`, `kitchen.html`, `database.rules.json`), neked már csak a
+Firebase Console-ban kell két dolgot bekapcsolnod:
+
+### 7a. Névtelen bejelentkezés engedélyezése
+
+1. Firebase Console → bal menü → **"Build"** → **"Authentication"**
+2. **"Get started"** (ha még nem volt bekapcsolva)
+3. **"Sign-in method"** fül → válaszd ki: **"Anonymous"**
+4. Kapcsold **"Enable"**-re → **"Save"**
+
+Enélkül az app nem fog tudni csatlakozni az adatbázishoz, mert a kód
+mostantól bejelentkezést vár, mielőtt olvasna/írna.
+
+### 7b. Security Rules feltöltése
+
+1. Firebase Console → **"Realtime Database"** → **"Rules"** fül
+2. Töröld ki a jelenlegi tartalmat, és másold be helyette a repóban
+   található `database.rules.json` fájl tartalmát
+3. **"Publish"**
+
+(Ha használod a Firebase CLI-t: `firebase login`, majd a `foodtruck-app`
+mappában `firebase deploy --only database` ugyanezt elvégzi
+parancssorból.)
+
+A szabályok ellenőrzik, hogy a beküldött rendelés adatok (pager szám,
+tételek, ár, státusz) formailag helyesek legyenek, és blokkolják egy
+már elküldött rendelés utólagos módosítását (pl. az ár meghamisítását) –
+csak a "kész" jelölés (status mező) módosítható utólag.
 
 ---
 

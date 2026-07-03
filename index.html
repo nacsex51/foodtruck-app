@@ -19,6 +19,7 @@
       amik nélkül nem tudna szinkronizálni a két tablet.
     -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
@@ -1087,19 +1088,26 @@
     // automatikusan lefut a callback függvény, és frissíti a képernyőt.
     // Ez az, ami miatt a két tablet szinkronban van!
     // ============================================================
-    ordersRef.on("value", (snapshot) => {
-        // snapshot.val() → az adatbázisból jövő adat
-        orders = snapshot.val() || {};  // Ha null (üres), legyen üres objektum
-        renderOrders();
-        // Pager gombokat is frissítjük, mert változhattak a foglalt pagerek
-        // Pl. ha töröltek egy rendelést, az a pager újra szabad lesz
-        renderPagerButtons();
-    });
+    // A listenereket csak a névtelen bejelentkezés sikeres létrejötte után
+    // kapcsoljuk be – a security rules hitelesítést követelnek meg, enélkül
+    // a lekérdezés "permission denied" hibával elutasítódna.
+    firebase.auth().onAuthStateChanged((user) => {
+        if (!user) return;
 
-    // A tartósan tárolt napi statisztikát is folyamatosan figyeljük,
-    // hogy a modal mindig a legfrissebb adatot mutassa.
-    statsRef.on("value", (snapshot) => {
-        dailyStats = snapshot.val() || { orderCount: 0, doneCount: 0, items: {} };
+        ordersRef.on("value", (snapshot) => {
+            // snapshot.val() → az adatbázisból jövő adat
+            orders = snapshot.val() || {};  // Ha null (üres), legyen üres objektum
+            renderOrders();
+            // Pager gombokat is frissítjük, mert változhattak a foglalt pagerek
+            // Pl. ha töröltek egy rendelést, az a pager újra szabad lesz
+            renderPagerButtons();
+        });
+
+        // A tartósan tárolt napi statisztikát is folyamatosan figyeljük,
+        // hogy a modal mindig a legfrissebb adatot mutassa.
+        statsRef.on("value", (snapshot) => {
+            dailyStats = snapshot.val() || { orderCount: 0, doneCount: 0, items: {} };
+        });
     });
 
 

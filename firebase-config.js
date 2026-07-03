@@ -17,6 +17,14 @@ const firebaseConfig = {
 // Firebase inicializálás (elindítás)
 firebase.initializeApp(firebaseConfig);
 
+// Névtelen bejelentkezés – a Realtime Database szabályai megkövetelik,
+// hogy csak hitelesített kliens olvasson/írjon adatot. Enélkül bárki,
+// aki a databaseURL-t ismeri, közvetlen HTTP kéréssel (pl. curl) is
+// tudna adatot lekérni vagy hamis rendelést beírni.
+firebase.auth().signInAnonymously().catch((err) => {
+  console.error("Névtelen bejelentkezés sikertelen:", err);
+});
+
 // Adatbázis referencia – ezen keresztül olvasunk/írunk adatot
 const db = firebase.database();
 
