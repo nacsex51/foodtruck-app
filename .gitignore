@@ -1,0 +1,9 @@
+# Claude Code helyi eszköz-beállítások (gép-specifikus, nem app-kód)
+.claude/
+
+# graphify skill generált cache/elemzés kimenete (regenerálható, nem app-kód)
+graphify-out/
+
+# OS-specifikus szemétfájlok
+.DS_Store
+Thumbs.db
