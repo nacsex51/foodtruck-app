@@ -89,10 +89,14 @@
             font-family: inherit;
         }
 
-        /* Fejléc sáv tetején */
+        /* Fejléc sáv tetején
+           min-height: rögzített érték, hogy a Pénztár és a Konyha oldal
+           fejléce pontosan azonos magasságú legyen, függetlenül attól,
+           hogy melyiken van ikon-gomb és melyiken nincs. */
         header {
             background: var(--bg-elevated);
             padding: 10px 20px;
+            min-height: 65px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -135,13 +139,15 @@
             font-weight: 600;
         }
 
-        /* Ikon-only gomb (pl. Beállítások a fejlécben) */
+        /* Ikon-only gomb (pl. Beállítások a fejlécben)
+           44×44px – ez adja meg a fejléc pontos, mindkét oldalon
+           azonos magasságát (lásd header { min-height }). */
         .icon-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background: var(--bg-elevated-2);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
@@ -162,7 +168,7 @@
         ============================================================ */
         .main-layout {
             display: flex;
-            height: calc(100vh - 60px);  /* Teljes magasság mínusz fejléc */
+            height: calc(100vh - 65px);  /* Teljes magasság mínusz fejléc */
         }
 
         /* Bal panel: rendelés összerakása */

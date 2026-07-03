@@ -76,9 +76,12 @@
     /* ============================================================
        FEJLÉC
     ============================================================ */
+    /* min-height: rögzített érték, hogy a Konyha és a Pénztár oldal
+       fejléce pontosan azonos magasságú legyen. */
     header {
       background: var(--bg-elevated);
       padding: 10px 20px;
+      min-height: 65px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -364,7 +367,7 @@
       justify-content: center;
       gap: 8px;
       position: fixed;
-      top: 58px;
+      top: 65px;
       left: 0;
       right: 0;
       background: var(--urgent);

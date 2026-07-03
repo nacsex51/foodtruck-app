@@ -448,3 +448,18 @@ volna ki a felhasználó explicit jóváhagyása nélkül; ez helyes védelem
 volt, nem került éles adat az adatbázisba. A Beállítások modal, a
 kosár-logika és az étlap-hozzáadás/törlés-validáció (az előző
 bejegyzésben leírtak) a redesign után is hibátlanul működik.
+
+**Utólagos javítás – fejléc-magasság egyeztetése:** a felhasználó
+jelezte, hogy a két oldal fejléce nem egyforma magas. Oka: az
+`index.html` fejlécében van egy ikon-gomb (fogaskerék), a
+`kitchen.html` fejlécében viszont csak egy kisebb, szöveges badge –
+azonos `padding` mellett is más lett a tényleges (tartalom által
+meghatározott) magasság. Megoldás: mindkét `header` szabály explicit
+`min-height: 65px`-et kapott, az `.icon-btn` mérete 40×40px-ről
+44×44px-re nőtt (ez adja ki pontosan a 65px-et: 44 + 2×10px padding +
+1px szegély – egyben jobb is accessibility szempontból, közelebb a
+44×44pt ajánlott minimum érintési célmérethez), és ennek megfelelően
+frissült az `index.html` `.main-layout` magasság-számítása
+(`calc(100vh - 65px)`) és a `kitchen.html` `.notification-bar` `top`
+pozíciója (`65px`). Preview-ban `getBoundingClientRect().height`
+alapján igazolva: mindkét oldal fejléce pontosan 65px.
