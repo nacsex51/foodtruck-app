@@ -4,7 +4,6 @@
       ".read": "auth != null",
 
       "$orderId": {
-        "//": "Létrehozás: csak ha az adott ID még nem létezik. Törlés: csak ha az új érték üres. Ez blokkolja egy már beküldött rendelés tartalmának (ár, tétel, pager) utólagos módosítását.",
         ".write": "auth != null && (!data.exists() || !newData.exists())",
 
         ".validate": "newData.hasChildren(['queue', 'items', 'status', 'timestamp'])",
@@ -14,7 +13,6 @@
         },
 
         "status": {
-          "//": "A pénztáros/szakács kliens csak ezt a mezőt frissítheti egy meglévő rendelésen.",
           ".write": "auth != null",
           ".validate": "newData.val() === 'new' || newData.val() === 'done'"
         },
