@@ -625,6 +625,10 @@ tartalmát publikálni kell a Firebase Console → Realtime Database →
 Rules fülön, MIELŐTT az új verzió élesbe kerül – enélkül a `category`
 mezős rendelés-küldés és étlap-bővítés `permission_denied` hibával
 elutasításra kerül (a `$other: false` szabály miatt).
+✅ **Megtörtént:** a szabályokat a felhasználó 2026-07-05-én, a GitHub
+Pages deploy (`346cd01`) után publikálta, és megerősítette, hogy az
+élő oldalon minden működik – a Firebase szabályok szinkronban vannak
+a repóbeli `database.rules.json`-nal.
 
 **Tesztelés:** helyi statikus szerveren (preview), élő Firebase ellen,
 adatbázis-írás nélkül. Igazolva: téma-váltás oda-vissza (tokenek,
