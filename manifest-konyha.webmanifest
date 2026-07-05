@@ -1,0 +1,32 @@
+{
+    "id": "foodtruck-konyha",
+    "name": "Foodtruck Konyha",
+    "short_name": "Konyha",
+    "description": "Beérkező rendelések kijelzője – szakács tablet",
+    "lang": "hu",
+    "start_url": "./kitchen.html",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#0a0a0f",
+    "icons": [
+        {
+            "src": "icons/icon-konyha-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-konyha-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-konyha-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

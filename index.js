@@ -590,9 +590,39 @@ function showStats() {
     const doneCount = dailyStats.doneCount || 0;
     const items = dailyStats.items || {};
 
-    // Rendezés: legtöbbet eladott tétel előre
+    // A statisztika csak tételnév + darabszám párokat tárol, ezért a
+    // kategóriát (Étel/Ital) az aktuális étlapból keressük ki név
+    // alapján. Ha egy tétel már nincs az étlapon, Ételnek számít
+    // (ugyanaz az alapértelmezés, mint mindenhol máshol az appban).
+    const isDrink = (name) => {
+        const menuItem = Object.values(menuItems).find(i => i.name === name);
+        return !!menuItem && menuItem.category === "drink";
+    };
+
+    // Rendezés: legtöbbet eladott tétel előre, majd bontás kategóriára
     const sorted = Object.entries(items)
         .sort((a, b) => b[1] - a[1]);  // b[1] - a[1] → csökkenő sorrend
+    const foods = sorted.filter(([name]) => !isDrink(name));
+    const drinks = sorted.filter(([name]) => isDrink(name));
+
+    // Egy szekció (cím + összesített darabszám + tételsorok) HTML-je.
+    // Az összesített darabszám a leltározást segíti.
+    const section = (title, list) => {
+        const sum = list.reduce((total, [, count]) => total + count, 0);
+        let h = `
+      <p class="stats-section-title">
+        <span>${title}</span>
+        <span class="stats-section-sum">össz. ${sum} db</span>
+      </p>
+    `;
+        h += list.map(([name, count]) => `
+      <div class="stat-row">
+        <span>${name}</span>
+        <span class="stat-value">${count} db</span>
+      </div>
+    `).join("");
+        return h;
+    };
 
     // HTML összeállítása a modalhoz
     let html = `
@@ -600,22 +630,14 @@ function showStats() {
       <span>Teljesített rendelés ma:</span>
       <span class="stat-value">${doneCount} db</span>
     </div>
-    <p style="color:var(--text-muted);font-size:0.75rem;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">
-      Eladott tételek
-    </p>
   `;
 
     if (sorted.length === 0) {
-        html += '<p style="color:var(--text-faint);font-size:0.85rem;">Ma még nincs teljesített rendelés.</p>';
+        html += '<p style="color:var(--text-faint);font-size:0.85rem;margin-top:12px;">Ma még nincs teljesített rendelés.</p>';
     } else {
-        sorted.forEach(([name, count]) => {
-            html += `
-        <div class="stat-row">
-          <span>${name}</span>
-          <span class="stat-value">${count} db</span>
-        </div>
-      `;
-        });
+        // Csak azok a szekciók jelennek meg, amikben van eladott tétel
+        if (foods.length > 0)  html += section("Ételek", foods);
+        if (drinks.length > 0) html += section("Italok", drinks);
     }
 
     document.getElementById("statsContent").innerHTML = html;

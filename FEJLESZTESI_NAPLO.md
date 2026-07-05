@@ -685,3 +685,90 @@ JS minden funkciója elérhető és működik (étlap-render cache-ből +
 Firebase-ből, megerősítő modal nyit/zár, téma-váltás, konyhai
 rendeléskártya-render az élő #16-os rendeléssel, hangjelzés-gomb),
 konzolhiba egyik oldalon sincs. Az élő adatbázishoz nem nyúltam.
+
+### 2026-07-05 – Dizájnjavítások: görgethető modal, lebegő küldés gomb, Étel/Ital statisztika
+
+**Igény (4 pont):** (1) hosszú étlapnál a Beállítások modal Bezárás
+gombja nem volt elérhető → legyen görgethető; (2) a RENDELÉS KÜLDÉSE
+gomb ne az oldal aljára legyen "fixálva", hanem görgetés közben a
+tételek felett lebegjen; (3) az étlap alján legyen hely, hogy az
+utolsó tételeket ne takarja a gomb; (4) a napi statisztika legyen
+Ételek/Italok szerint bontva a leltározás segítésére.
+
+**Megoldások:**
+
+1. **Görgethető modal (`index.css`):** a `.modal` kapott
+   `max-height: 88vh`-t és flex-oszlop elrendezést; a két hosszúra
+   nyúlható lista (`#menuManageList` az étlap-szerkesztőben,
+   `#statsContent` a statisztikában) belül görgethető
+   (`overflow-y: auto`), minden más elem (cím, form, gombok) nem
+   zsugorodik. Így a Bezárás gomb bármilyen hosszú étlapnál látható
+   és kattintható marad.
+2. **Lebegő küldés gomb (`index.css`):** a `.send-btn`
+   `position: sticky; bottom: 10px`-et kapott – görgetés közben a bal
+   panel alján, a tételek FELETT lebeg (mindig kéznél van), a lista
+   legaljára érve pedig a természetes helyére, a kosár alá simul.
+   Árnyékot kapott, hogy elváljon az alatta elcsúszó tartalomtól.
+3. **Hely az étlap alján (`index.css`):** a `.left-panel` alsó
+   paddingje 16px→32px, így legaljára görgetve az utolsó tételek és
+   a kosár is kényelmesen a gomb fölött látszik.
+4. **Étel/Ital bontású statisztika (`index.js`, `showStats()`):** a
+   modal mostantól két szekcióban listáz – ÉTELEK és ITALOK – saját
+   összesített darabszámmal (pl. "össz. 28 db") a leltározáshoz.
+   A kategóriát az aktuális étlapból oldjuk fel tételnév alapján,
+   mert a `dailyStats` ág csak név+darab párokat tárol, és a
+   Firebase-szabály (`$other: false`) új mezőt nem engedne – így az
+   **adatmodell és a szabályok változatlanok**, semmit nem kell újra
+   publikálni. Ha egy tétel már nincs az étlapon, Ételnek számít
+   (az app többi részével azonos alapértelmezés).
+
+**Tesztelés:** preview szerveren, élő Firebase ellen, **írás nélkül** –
+a hosszú étlapot (24 tétel) és a statisztikát csak a memóriában,
+lokálisan szimuláltam. Igazolva képernyőképekkel: a küldés gomb
+görgetés közben végig látható és a panel alján lebeg; az étlap aljára
+görgetve minden tétel + kosár a gomb felett látszik; a Beállítások
+modalban a tétellista belül görgethető, a Bezárás gomb végig elérhető;
+a statisztika modal két szekcióban, összesítőkkel jelenik meg.
+Konzolhiba nincs.
+
+### 2026-07-05 – PWA manifest: keresősáv nélküli, appszerű megnyitás tableten
+
+**Igény:** androidos tableten, Chrome-ban megnyitva ne látsszon fent a
+keresősáv (címsor).
+
+**Háttér:** a Chrome csak akkor rejti el a keresősávot, ha az oldal
+telepített webalkalmazásként (PWA) fut. Ehhez Web App Manifest kell –
+eddig csak a régi `mobile-web-app-capable` meta-tagek voltak, amiket a
+mai Chrome már nem vesz figyelembe, ezért a kezdőképernyőre tett
+ikon is csak sima böngésző-linkként nyílt meg.
+
+**Megoldás – két külön manifest (tabletenként saját app):**
+
+| Fájl | App neve | Indul | Ikon |
+|---|---|---|---|
+| `manifest-penztar.webmanifest` | Foodtruck Pénztár | `index.html` | narancs "P" |
+| `manifest-konyha.webmanifest` | Foodtruck Konyha | `kitchen.html` | arany "K" |
+
+- mindkettő `display: "standalone"` → telepítés után saját ablakban,
+  **keresősáv nélkül** nyílik, saját ikonnal a kezdőképernyőn
+- új `icons/` mappa: 192 és 512 px PNG app-ikonok (a tabletek
+  azonosító színeivel: pénztár `#d93a16`, konyha `#ffb020`),
+  maskable változattal a kerek Android-ikonokhoz
+- a `<link rel="manifest">` bekötve az `index.html` és `kitchen.html`
+  fejlécébe; adatmodell, Firebase, JS-logika érintetlen
+- service worker szándékosan NINCS (a mai Chrome-nak már nem kell a
+  telepítéshez, és offline-gyorsítótár nélkül nem fordulhat elő, hogy
+  egy tablet régi kódot futtat frissítés után)
+
+**Telepítés a tableten (feltöltés után):** Chrome-ban megnyitni az
+oldalt → jobb felső ⋮ menü → „Alkalmazás telepítése" (vagy „Hozzáadás
+a kezdőképernyőhöz" → Telepítés) → ezután a kezdőképernyő ikonjáról
+indítva keresősáv nélkül, appként fut. A korábbi sima parancsikont
+érdemes előtte törölni. FONTOS: csak HTTPS-ről (GitHub Pages) működik,
+a változtatások feltöltése után.
+
+**Tesztelés:** preview szerveren igazolva, hogy mindkét manifest és
+mind a 4 ikon hibátlanul betöltődik (HTTP 200, érvényes JSON,
+`display: standalone`, helyes `start_url`), a manifest-link mindkét
+oldal fejlécében jelen van, konzolhiba nincs. A tényleges telepítés
+androidos tableten csak a GitHub-ra feltöltés után próbálható ki.

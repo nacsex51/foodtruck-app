@@ -187,10 +187,12 @@ header h1 {
     height: calc(100vh - 65px);  /* Teljes magasság mínusz fejléc */
 }
 
-/* Bal panel: rendelés összerakása */
+/* Bal panel: rendelés összerakása
+   padding-bottom: extra hely az alján, hogy a legaljára görgetve az
+   utolsó tételek is a lebegő RENDELÉS KÜLDÉSE gomb fölött látszódjanak */
 .left-panel {
     width: 55%;
-    padding: 16px;
+    padding: 16px 16px 32px;
     overflow-y: auto;       /* Görgethetővé teszi ha sok az étel */
     border-right: 1px solid var(--border);
 }
@@ -495,6 +497,9 @@ header h1 {
 
 /* ============================================================
    RENDELÉS KÜLDÉSE GOMB
+   position: sticky → görgetés közben a panel alján lebeg a
+   tételek FELETT, így mindig kéznél van; a lista legaljára érve
+   pedig a helyére (a kosár alá) simul. Nem fix az oldalon!
 ============================================================ */
 .send-btn {
     width: 100%;
@@ -513,6 +518,10 @@ header h1 {
     margin-top: 14px;
     transition: background 0.2s;
     letter-spacing: 0.5px;
+    position: sticky;
+    bottom: 10px;           /* Ennyivel lebeg a panel alja felett */
+    z-index: 50;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);  /* Elválik az alatta elcsúszó tartalomtól */
 }
 
 .send-btn:hover { background: var(--primary-hover); }
@@ -762,6 +771,25 @@ header h1 {
     max-width: 400px;
     border: 1px solid var(--border-strong);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    /* Sosem lóghat ki a képernyőből: hosszú étlapnál a belső lista
+       (#menuManageList / #statsContent) görgethető, a Bezárás gomb
+       így mindig látható és elérhető marad. */
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* A modal elemei (cím, form, gombok) ne zsugorodjanak össze... */
+.modal > * {
+    flex-shrink: 0;
+}
+
+/* ...csak a két hosszúra nyúlható lista görgetődjön */
+#menuManageList,
+#statsContent {
+    flex-shrink: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .modal h2 {
@@ -772,6 +800,26 @@ header h1 {
     color: var(--primary-hover);
     margin-bottom: 16px;
     font-size: 1.05rem;
+}
+
+/* Szekciócím a statisztika modalban (Ételek / Italok bontás) */
+.stats-section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 14px 0 4px;
+}
+
+/* A szekció összesített darabszáma (leltározáshoz) */
+.stats-section-sum {
+    font-family: var(--font-display);
+    color: var(--primary-hover);
+    font-weight: 700;
+    font-size: 0.8rem;
 }
 
 .stat-row {
