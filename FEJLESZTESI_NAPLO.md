@@ -27,17 +27,21 @@ folyamat, tiszta HTML/CSS/JavaScript.
 
 ```
 foodtruck-app/
-├── index.html          – Pénztáros felület (rendelésfelvitel)
-├── kitchen.html         – Szakács felület (konyhai kijelző)
+├── index.html           – Pénztáros felület: HTML váz (rendelésfelvitel)
+├── index.css            – Pénztáros stíluslap (2026-07-05 óta külön fájl)
+├── index.js             – Pénztáros alkalmazás-logika (2026-07-05 óta külön fájl)
+├── kitchen.html         – Szakács felület: HTML váz (konyhai kijelző)
+├── kitchen.css          – Szakács stíluslap (2026-07-05 óta külön fájl)
+├── kitchen.js           – Szakács alkalmazás-logika (2026-07-05 óta külön fájl)
 ├── firebase-config.js   – Közös Firebase kapcsolódási adatok
-├── icons.js             – Közös SVG ikon-készlet (2026-07-03 óta)
-└── TELEPITES.md         – Telepítési útmutató
+└── icons.js             – Közös SVG ikon-készlet (2026-07-03 óta)
 ```
 
 ### Vizuális dizájn (2026-07-03 óta)
 
 Mindkét felület egy közös, sötét "prémium" dizájnrendszert használ
-(CSS custom property-k a `<style>` blokk elején), emoji helyett
+(CSS custom property-k a stíluslapok – `index.css`, `kitchen.css` –
+elején), emoji helyett
 letisztult SVG vonal-ikonokkal (`icons.js`, `icon()`/`hydrateIcons()`
 függvények). A két tablet saját "azonosító színt" kapott, hogy első
 pillantásra megkülönböztethetők legyenek:
@@ -63,29 +67,33 @@ szöveges gomb volt a jobb panelen).
 {
   queue: 3,                 // Pager sorszám (1–16)
   items: [
-    { name: "Cheeseburger", qty: 1, note: "", price: 1800 },
-    { name: "Pljeskavica",  qty: 1, note: "hagyma nélkül", price: 2000 }
+    { name: "Cheeseburger", qty: 1, note: "", price: 1800, category: "food" },
+    { name: "Kóla",         qty: 2, note: "", price: 300,  category: "drink" }
   ],
-  status: "new" | "done",   // Konyhai állapot
+  status: "new" | "done",   // Kész-e (konyhai KÉSZ gomb VAGY pénztári pipa)
   timestamp: 1782684888781  // Létrehozás ideje (ms)
 }
 ```
+A `category` mező 2026-07-05 óta létezik ("food" vagy "drink"); a régebbi,
+kategória nélküli tételek mindenhol ételnek számítanak.
 
-**`dailyStats`** – tartósan tárolt napi összesítő (2026-07-02 óta, lásd napló):
+**`dailyStats`** – tartósan tárolt napi összesítő (2026-07-02 óta; 2026-07-05
+óta **csak a késznek/teljesítettnek jelölt rendelések** kerülnek bele):
 ```javascript
 {
-  orderCount: 12,                 // Hány rendelés érkezett a nullázás óta
-  doneCount: 9,                   // Hány rendelést jelöltek KÉSZ-nek
-  items: { "Cheeseburger": 8, "Pomfrit": 15, ... }  // Eladott tételek darabszáma
+  doneCount: 9,                   // Hány rendelést jelöltek késznek a nullázás óta
+  items: { "Cheeseburger": 8, "Kóla": 5, ... }  // Kész rendelések tételei (italokkal együtt)
 }
 ```
+(A korábbi `orderCount` mezőt már semmi nem növeli – a nullázás a régi
+struktúra miatt még 0-ra állítja, de a felület nem mutatja.)
 
 **`menu`** – az étlap (eladható tételek + áraik), 2026-07-03 óta (lásd napló),
 kulcs = Firebase-generált egyedi ID:
 ```javascript
 {
-  "-Nab...": { name: "Cheeseburger", price: 1800 },
-  "-Nac...": { name: "Pomfrit", price: 900 }
+  "-Nab...": { name: "Cheeseburger", price: 1800, category: "food" },
+  "-Nac...": { name: "Kóla", price: 300, category: "drink" }
 }
 ```
 
@@ -93,8 +101,14 @@ kulcs = Firebase-generált egyedi ID:
 
 1. **Pager kiválasztása** – 16 gomb (1–16). Foglalt pagerek (amiknek van
    aktív, még nem törölt rendelése) szürkék és nem kattinthatók.
-2. **Kosár összeállítása** – a "KAJÁK" menüből tételekre kattintva kerülnek
+2. **Kosár összeállítása** – az "Ételek" és "Italok" szekciókból (2026-07-05
+   óta, korábban egyetlen "KAJÁK" lista volt) tételekre kattintva kerülnek
    a kosárba; azonos tétel duplikattintásra csak a darabszámot növeli.
+   Az "Italok" szekció csak akkor látszik, ha van ital az étlapon.
+   Az étlap betöltéskor azonnal kirajzolódik egy localStorage-gyorsítótárból
+   (`foodtruckMenuCache`, 2026-07-05 óta), a Firebase-ből érkező friss adat
+   ezt utána felülírja; amíg se cache, se Firebase-adat nincs, "Étlap
+   betöltése…" jelzés látszik.
    Minden tételhez írható egyedi megjegyzés (pl. "hagyma nélkül"). Minden
    menügomb és kosártétel mutatja az egységárat, a kosártételeknél a
    sorösszeget (egységár × darabszám) is, a kosár alján pedig egy
@@ -103,41 +117,63 @@ kulcs = Firebase-generált egyedi ID:
 3. **Rendelés küldése** – a `sendOrder()` függvény:
    - ellenőrzi, hogy van-e kiválasztott pager és nem üres-e a kosár
    - felpusholja a rendelést az `orders` ághoz (`status: "new"`)
-   - **ugyanekkor** növeli a `dailyStats` számlálóit (rendelésszám +
-     tételenkénti darabszám) – ez a tartós statisztika, ami nem vész el,
-     ha a rendelést utólag törlik
+   - a napi statisztikába itt még **nem** kerül semmi (2026-07-05 óta) –
+     a rendelés csak akkor könyvelődik, amikor késznek jelölik
    - kiüríti a kosarat és a pager-kiválasztást
 4. **Aktív rendelések listája** – valós időben frissül (`orders.on("value")`),
-   legújabb felül, mindegyiken törlés gomb (`🗑️ Rendelés törlése`,
-   megerősítést kér).
+   legújabb felül. Minden még nem kész rendelésen zöld **"✅ TELJESÍTVE"
+   (pipa) gomb** (2026-07-05 óta): a `markOrderDone()` transaction-nel
+   `"done"`-ra állítja a státuszt, és ekkor könyveli a rendelés összes
+   tételét a napi statisztikába (`applyStatsForOrder`, közös függvény a
+   `firebase-config.js`-ben). A csak italt tartalmazó rendelést csak itt
+   lehet késznek jelölni, mert az a konyhán meg sem jelenik. Emellett
+   mindegyik kártyán törlés gomb (`🗑️ Rendelés törlése`, saját
+   megerősítő modallal).
 5. **Napi statisztika modal** (`📊 Napi statisztika megtekintése`):
    - a tartósan tárolt `dailyStats`-ból olvas, nem az aktív rendelésekből
-   - mutatja: összes rendelés, ebből teljesített, eladott ételek
-     darabszám szerint csökkenő sorrendben
+   - **csak a késznek jelölt rendelések** szerepelnek benne (2026-07-05
+     óta): teljesített rendelések száma + eladott tételek (ételek és
+     italok együtt) darabszám szerint csökkenő sorrendben
    - **"🗑️ Statisztika nullázása" gomb**: megerősítés után nullázza a
-     tárolt statisztikát (`dailyStats.set({orderCount:0, doneCount:0,
-     items:{}})`); az aktív rendeléseket nem érinti
-6. **Étlap beállítása modal** (`⚙️ Étlap beállítása`, 2026-07-03 óta):
-   - új tétel felvétele: név + ár (din) megadása után "➕ Hozzáadás az
-     étlaphoz" → `menuRef.push({name, price})`; kliensoldali validáció
-     (nem üres név, 0–100000 közti ár, nincs már ilyen nevű tétel)
+     tárolt statisztikát; az aktív rendeléseket nem érinti
+6. **Beállítások modal** (⚙️ fogaskerék a fejlécben; 2026-07-05-ig "Étlap
+   beállítása" néven):
+   - **Megjelenés**: sötét / világos mód váltó (2026-07-05 óta). A
+     választás localStorage-ben tárolódik (`foodtruckTheme` kulcs),
+     tabletenként külön; egy `<head>`-beli mini-script már az első
+     kirajzolás előtt alkalmazza, hogy ne villanjon. A világos mód a
+     `html[data-theme="light"]` alatti CSS-token felülírásokkal működik.
+   - **Étlap** – új tétel felvétele: név + ár (din) + kategória
+     (Étel/Ital legördülő) után "➕ Hozzáadás az étlaphoz" →
+     `menuRef.push({name, price, category})`; kliensoldali validáció
+     (nem üres név, 1–100000 közti ár, nincs már ilyen nevű tétel)
+   - **ár módosítása** (2026-07-05 óta): a listában minden tétel ára
+     szerkeszthető szám-mező; kilépéskor/Enterre `updateMenuItemPrice()`
+     azonnal menti (ugyanazzal az ár-validációval)
    - meglévő tétel törlése: a listában lévő ✕ gomb, megerősítés után
-     `menuRef.child(id).remove()`
-   - az étlap (`menuGrid`) és ez a lista is valós időben frissül
+     (saját megerősítő modal) `menuRef.child(id).remove()`
+   - az étlap-rácsok és ez a lista is valós időben frissül
      (`menuRef.on("value", ...)`), így ha valaki hozzáad egy tételt, az
      azonnal megjelenik minden nyitva lévő lapon
 
 ### Szakács oldal (`kitchen.html`) működése
 
-1. Valós időben figyeli az `orders` ágat, minden rendelést kártyaként
-   jelenít meg (pager szám, tételek, megjegyzések, állapot).
+1. Valós időben figyeli az `orders` ágat, a rendeléseket kártyaként
+   jeleníti meg (pager szám, tételek, megjegyzések, állapot). **Az
+   italok nem jelennek meg** (2026-07-05 óta, `kitchenItems()` szűrő):
+   vegyes rendelésnél csak az ételek látszanak, a csak italt tartalmazó
+   rendelés kártyája meg sem jelenik (azt a pénztáros pipálja ki), és az
+   "új" számlálóba sem számít bele.
 2. **Új rendelés érkezésekor**: hangjelzés (`playBeep()`) + felugró
    értesítő sáv, 3 másodperc után eltűnik. (Első betöltéskor nem szól,
-   csak a már ismert ID-kat rögzíti.)
-3. **"✅ KÉSZ" gomb**: `status` átállítása `"done"`-ra, **és** növeli a
-   `dailyStats.doneCount` értéket.
+   csak a már ismert ID-kat rögzíti; csak italos rendelésre nem jelez.)
+3. **"✅ KÉSZ" gomb**: transaction-nel `"done"`-ra állítja a státuszt,
+   **és ekkor** könyveli a rendelés összes tételét (az italokat is) a
+   napi statisztikába (`applyStatsForOrder`). A transaction garantálja,
+   hogy ha a pénztári pipa gombbal (majdnem) egyszerre nyomnák meg,
+   a statisztikába akkor is csak egyszer kerüljön be a rendelés.
 4. **"↩️ Visszaállítás újra" gomb** (csak kész rendelésen): `status`
-   vissza `"new"`-ra, **és** csökkenti a `dailyStats.doneCount` értéket.
+   vissza `"new"`-ra, és a statisztikából levonja, amit a KÉSZ hozzáadott.
 5. Rendelés törlése csak a pénztáros oldalról lehetséges; ha ott törlik,
    a konyhai nézetből is azonnal eltűnik (közös Firebase adat).
 
@@ -463,3 +499,185 @@ frissült az `index.html` `.main-layout` magasság-számítása
 (`calc(100vh - 65px)`) és a `kitchen.html` `.notification-bar` `top`
 pozíciója (`65px`). Preview-ban `getBoundingClientRect().height`
 alapján igazolva: mindkét oldal fejléce pontosan 65px.
+
+### 2026-07-05 – Manuális teszt hibáinak javítása (foodtruck-app-hibak.md)
+
+A 2026-07-04-i, éles GitHub Pages-en végzett manuális teszt három
+hibát talált (`foodtruck-app-hibak.md`), mindhárom javítva
+(`index.html` – a `kitchen.html` nem használt `confirm()`-ot, ott nem
+kellett módosítás):
+
+**1. Natív `confirm()` lecserélve saját megerősítő modalra.**
+A natív `confirm()` blokkolja a renderelést (kioszk/PWA módban
+lefagyást okozhat), és nem illik az app sötét dizájnjához. Új,
+a meglévő modalok mintájára készült "Megerősítés" modal
+(`#confirmModal`, `showConfirm(üzenet, gombfelirat, teendő)` /
+`closeConfirm()` / `acceptConfirm()`): Mégse + piros megerősítő gomb,
+a callback csak megerősítéskor fut le. `z-index: 300` (a többi modal
+200-as szintje felett), mert az étlaptétel-törlés megerősítése a
+Beállítások modal fölött jelenik meg. Mindhárom hívóhely átállt:
+`deleteOrder()` (Rendelés törlése), `resetStats()` (Statisztika
+nullázása – gombfelirat: "Nullázás"), `deleteMenuItem()` (étlaptétel
+törlése). A tétel neve `textContent`-ként kerül a modalba, így
+HTML-ként nem értelmeződik.
+
+**2. Üres "KAJÁK" lista első betöltéskor.**
+Ok: az étlap kizárólag a Firebase névtelen hitelesítés + adatletöltés
+után renderelődött (`onAuthStateChanged` → `menuRef.on("value")` →
+`renderMenu()`), így az első másodpercekben a szekció üres volt – a
+tesztben ez tűnt úgy, mintha csak a pager-kattintás után jelenne meg.
+Javítás: az étlap localStorage-gyorsítótárba kerül
+(`foodtruckMenuCache` kulcs, `saveMenuCache()` minden Firebase-
+frissüléskor), és az oldal betöltésekor `loadMenuCache()` +
+`renderMenu()` szinkron, még bármilyen hálózati válasz előtt kirajzolja
+a menügombokat. Amíg se cache, se Firebase-adat nincs (legelső
+indítás), "Étlap betöltése…" jelzés látszik az üres szekció helyett;
+a "Még nincs felvéve étlap tétel" üzenet csak már megérkezett, tényleg
+üres étlapnál jelenik meg (`menuLoaded` flag).
+
+**3. Teszt-szemét az étlapban + input validáció.**
+A Firebase `menu` ág REST API-s ellenőrzése (névtelen hitelesítéssel,
+csak olvasás) kimutatta, hogy a két teszttétel ("Teszt Kóla" – 500 din,
+"Szar" – 1 din) **már nincs az adatbázisban** – a kézi törlés korábban
+megtörtént, az étlap a 8 rendes tételt tartalmazza, adattisztításra nem
+volt szükség. Az opcionális kódjavítás elkészült: az `addMenuItem()`
+ár-validációja `price < 0`-ról `price <= 0`-ra szigorodott (a 0 ár és
+az üres ár-mező is elutasításra kerül), a hibaüzenet és az ár input
+`min` attribútuma ennek megfelelően frissült (1–100000 din). Az üres
+név és a duplikált név elutasítása már korábban is megvolt.
+
+**Tesztelés:** helyi statikus szerveren (preview), élő Firebase ellen,
+írás nélkül. Igazolva: a 8 menügomb azonnal renderelődik, a cache
+mentődik és újratöltés után is 8 gomb jelenik meg; a "betöltés" /
+"üres étlap" állapotok helyesen váltanak; mindhárom megerősítő folyamat
+a saját modalt nyitja (helyes üzenettel és gombfelirattal), Mégse után
+semmi nem törlődik és a függőben lévő művelet törlődik; a validáció
+mind az öt hibás bevitelt (0 / üres / negatív ár, üres név, duplikált
+név) elutasítja, az étlapba nem került írás. Konzolhiba nincs, natív
+`confirm()` hívás nem maradt a kódban (csak kommentekben szerepel).
+
+### 2026-07-05 – Világos mód, árszerkesztés, Italok kategória, statisztika csak kész rendelésből + pénztári pipa gomb
+
+**Igény (5 kérés egyben):** (1) a Beállításokban lehessen sötét és
+világos mód között váltani; (2) az étlapon lehessen módosítani a
+tételek árát; (3) a "Kaják" felirat legyen "Ételek"; (4) legyen
+"Italok" kategória, ami nem megy át a konyhára, csak a napi
+statisztikába; (5) a statisztikába csak az kerüljön bele, ami késznek
+van jelölve – ezért legyen pipa gomb a pénztárnál is, amivel a
+rendelés teljesítetté tehető.
+
+**1. Sötét/világos mód (`index.html`, `index.css`, `index.js`, `icons.js`):**
+- a Beállítások modal tetején új "Megjelenés" szekció két gombbal
+  (🌙 Sötét mód / ☀️ Világos mód, új `moon`/`sun` SVG ikonok)
+- a világos téma a `html[data-theme="light"]` alatti CSS-token
+  felülírásokkal működik (világos hátterek, sötét szöveg; az arany
+  ár-szín sötétebb borostyánra vált a kontraszt miatt – a parázs
+  narancs-piros azonosító szín marad)
+- a választás localStorage-ben tárolódik (`foodtruckTheme` kulcs,
+  tabletenként külön), és egy `<head>`-beli mini-script már az első
+  kirajzolás előtt alkalmazza, hogy ne villanjon sötét → világos
+  váltás; a `theme-color` meta (böngésző-sáv színe) is együtt vált
+- a modal címe "Étlap beállítása" helyett "Beállítások" lett
+
+**2. Árszerkesztés a Beállításokban (`index.js`):** a tétellistában az
+ár mostantól szerkeszthető szám-mező; kilépéskor/Enterre az
+`updateMenuItemPrice()` a felvételkori validációval (1–100000 din)
+azonnal menti Firebase-be (`menuRef.child(id).update({price})`), és a
+real-time listener miatt minden nyitott lapon frissül.
+
+**3–4. "Ételek" + "Italok" kategória (`index.html`, `index.js`,
+`kitchen.js`, `database.rules.json`):**
+- a menütételek új `category` mezőt kaptak ("food"/"drink"); a
+  Beállítások űrlapján Étel/Ital legördülő; a tétellistában
+  kategória-jelölő badge
+- a pénztár bal panelén az egykori "KAJÁK" lista helyett "Ételek"
+  szekció + külön "Italok" szekció (utóbbi csak akkor látszik, ha van
+  ital az étlapon); a kosárba tett tétel viszi magával a kategóriáját
+- a konyhai kijelzőn az italok NEM jelennek meg: vegyes rendelésnél
+  csak az ételek látszanak (`kitchenItems()` szűrő), a csak italt
+  tartalmazó rendelésnek kártyája sincs, az "új" számlálóba és a
+  hangjelzésbe sem számít bele
+- a régebbi, kategória nélküli tételek/rendelések mindenhol ételnek
+  számítanak (visszafelé kompatibilis)
+- `database.rules.json`: a `menu` és az `orders.items` validációja
+  kiegészült az opcionális `category` mezővel ('food'/'drink')
+
+**5. Statisztika csak kész rendelésből + pénztári pipa gomb
+(`index.js`, `kitchen.js`, `firebase-config.js`):**
+- a `sendOrder()` már NEM ír a statisztikába – a rendelés akkor
+  könyvelődik, amikor késznek jelölik
+- új közös `applyStatsForOrder(order, ±1)` függvény a
+  `firebase-config.js`-ben: a rendelés összes tételét (italokkal
+  együtt) hozzáadja/levonja a `dailyStats`-ból
+- a pénztár aktív rendelés kártyáin új zöld "✅ TELJESÍTVE" (pipa)
+  gomb (`markOrderDone()`) – a csak italos rendeléseket csak itt lehet
+  késznek jelölni; a konyhai "KÉSZ"/"Visszaállítás újra" ugyanígy
+  könyvel/von le
+- mindkét oldal transaction-nel állítja át a státuszt, így ha a
+  pénztár és a konyha (majdnem) egyszerre nyomná meg a gombot, a
+  statisztikába akkor is csak egyszer kerül be a rendelés
+- a statisztika modal új felirata: "Teljesített rendelés ma" +
+  "Eladott tételek" (a félrevezetővé vált "Összes rendelés ma" sor
+  kikerült; a `dailyStats.orderCount` mezőt már semmi nem növeli)
+
+**FONTOS, kézi teendő élesítéskor:** a frissült `database.rules.json`
+tartalmát publikálni kell a Firebase Console → Realtime Database →
+Rules fülön, MIELŐTT az új verzió élesbe kerül – enélkül a `category`
+mezős rendelés-küldés és étlap-bővítés `permission_denied` hibával
+elutasításra kerül (a `$other: false` szabály miatt).
+
+**Tesztelés:** helyi statikus szerveren (preview), élő Firebase ellen,
+adatbázis-írás nélkül. Igazolva: téma-váltás oda-vissza (tokenek,
+localStorage, meta szín, gomb-kiemelés), a Beállítások modal új
+szekciói (Étel/Ital választó, 8 tétel szerkeszthető ár-mezővel),
+"Ételek" cím és a szimulált ital külön "Italok" rácsban, kosárba tett
+ital `category: "drink"`-kel, statisztika modal új felirata; a konyhai
+nézetben szimulált adattal: vegyes rendelésből csak az étel látszik, a
+csak italos rendelés nem jelenik meg, a kategória nélküli régi tétel
+ételként renderelődik, az "új" számláló helyes. Konzolhiba nincs. A
+teszt közben az adatbázisban lévő élő rendeléshez (#16) nem nyúltam.
+
+### 2026-07-05 – Kódszerkezet: CSS és JS külön fájlokba, tartalomjegyzékek
+
+**Igény:** a CSS kerüljön külön fájlba, és a programkód legyen szépen
+tagolva, hogy könnyű legyen benne navigálni.
+
+**Megoldás – szétbontás fájltípusonként:** az eddig egyetlen nagy
+`index.html`-ben (~2000 sor) és `kitchen.html`-ben (~700 sor) lévő
+inline `<style>` és `<script>` blokkok külön fájlokba kerültek:
+
+| Régi hely | Új fájl | Tartalom |
+|---|---|---|
+| `index.html` `<style>` | `index.css` | Pénztár stíluslap (14 szekció) |
+| `index.html` `<script>` | `index.js` | Pénztár logika (22 szekció) |
+| `kitchen.html` `<style>` | `kitchen.css` | Konyha stíluslap (7 szekció) |
+| `kitchen.html` `<script>` | `kitchen.js` | Konyha logika (8 szekció) |
+
+- a kód **betűre pontosan**, változtatás nélkül került át (csak a
+  közös behúzás tűnt el), a meglévő magyar magyarázó kommentekkel
+  együtt – a viselkedés nem változott
+- minden új fájl elejére **TARTALOMJEGYZÉK** került: a fájlban lévő
+  szekció-bannerek címeit sorolja fel, így a címre keresve (Ctrl+F)
+  azonnal a megfelelő részre lehet ugrani
+- a HTML fájlok így rövid, átlátható "vázak" lettek (`index.html`
+  ~210 sor, `kitchen.html` ~60 sor): csak a felület szerkezete maradt
+  bennük, kommentekkel tagolva
+- ami szándékosan **helyben maradt**: a `<head>`-beli mini
+  téma-alkalmazó script az `index.html`-ben (annak az első kirajzolás
+  előtt kell futnia, hogy világos módban ne villanjon a sötét felület),
+  valamint a közös `firebase-config.js` és `icons.js` hivatkozások
+- a betöltési sorrend változatlan: Firebase SDK-k + `icons.js` a
+  fejlécben, `firebase-config.js` + oldal-saját JS a `</body>` előtt;
+  az oldal-saját JS nem module, így a HTML `onclick` kezelői ugyanúgy
+  elérik a globális függvényeket, mint eddig
+- mellékes javítás: a `.claude/launch.json` preview-szerver konfig
+  `autoPort`-ot kapott és a kiosztott `PORT` környezeti változót
+  használja, így több párhuzamos munkamenet sem ütközik a fix porton
+
+**Tesztelés:** helyi statikus szerveren (preview), élő Firebase ellen,
+adatbázis-írás nélkül, mindkét oldalon. Igazolva: a külső CSS
+érvényesül (dizájn-tokenek, sötét és világos mód oda-vissza), a külső
+JS minden funkciója elérhető és működik (étlap-render cache-ből +
+Firebase-ből, megerősítő modal nyit/zár, téma-váltás, konyhai
+rendeléskártya-render az élő #16-os rendeléssel, hangjelzés-gomb),
+konzolhiba egyik oldalon sincs. Az élő adatbázishoz nem nyúltam.

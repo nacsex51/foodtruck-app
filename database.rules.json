@@ -37,6 +37,9 @@
             "note": {
               ".validate": "newData.isString() && newData.val().length <= 300"
             },
+            "category": {
+              ".validate": "newData.val() === 'food' || newData.val() === 'drink'"
+            },
             "$other": {
               ".validate": false
             }
@@ -81,6 +84,9 @@
         },
         "price": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+        },
+        "category": {
+          ".validate": "newData.val() === 'food' || newData.val() === 'drink'"
         },
         "$other": {
           ".validate": false

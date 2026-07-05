@@ -1,0 +1,1059 @@
+/* ============================================================
+   PÉNZTÁR OLDAL – STÍLUSLAP (az index.html tölti be)
+   ============================================================
+   TARTALOMJEGYZÉK – a címre keresve (Ctrl+F) ugorhatsz a
+   megfelelő szekcióra:
+     1. DIZÁJN TOKENEK
+     2. VILÁGOS MÓD
+     3. ALAP STÍLUSOK
+     4. FŐ ELRENDEZÉS
+     5. PAGER GOMBOK (sorszám választó)
+     6. ÉTEL KATEGÓRIÁK ÉS GOMBOK
+     7. KOSÁR (az összerakott rendelés)
+     8. RENDELÉS KÜLDÉSE GOMB
+     9. RENDELÉSEK LISTÁJA (jobb panel)
+    10. NAPI STATISZTIKA GOMB
+    11. MODAL (felugró ablak) - Statisztikához és Beállításokhoz
+    12. MODAL - Beállítások (étlap tétel hozzáadása/törlése)
+    13. MODAL - Beállítások: téma (sötét/világos mód) váltó
+    14. MODAL - Megerősítés (a natív confirm() kiváltása)
+============================================================ */
+
+/* ============================================================
+   DIZÁJN TOKENEK – minden szín/radius/betű innen ered, hogy
+   a Pénztár és a Konyha oldal vizuálisan egységes maradjon,
+   miközben a saját "identitás-színük" (parázs / arany) eltér.
+============================================================ */
+:root {
+    --bg: #0a0a0f;
+    --bg-elevated: #14141c;
+    --bg-elevated-2: #1c1c26;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #f5f5f7;
+    --text-muted: #9a9aac;
+    --text-faint: #5c5c6e;
+
+    --primary: #d93a16;         /* Parázs narancs-piros – Pénztár azonosító szín (WCAG AA fehér szöveggel) */
+    --primary-hover: #ff5a36;
+    --primary-soft: rgba(217, 58, 22, 0.16);
+    --on-primary: #ffffff;
+
+    --gold: #ffb020;            /* Ár-kiemelés – "étvágygerjesztő" arany */
+    --success: #2ecc71;
+    --success-strong: #22b263;
+    --danger: #ef4444;
+    --danger-soft: rgba(239, 68, 68, 0.14);
+
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 9px;
+    --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.35);
+
+    --font-display: 'Outfit', 'Segoe UI', sans-serif;
+    --font-body: 'Rubik', 'Segoe UI', sans-serif;
+}
+
+/* ============================================================
+   VILÁGOS MÓD – a html[data-theme="light"] attribútum felülírja
+   a sötét alapértékeket. A témát a Beállítások modalban lehet
+   váltani, a választás localStorage-ben tárolódik, és a <head>
+   elején lévő kis script már betöltéskor alkalmazza.
+============================================================ */
+html[data-theme="light"] {
+    --bg: #f2f2f6;
+    --bg-elevated: #ffffff;
+    --bg-elevated-2: #ebebf1;
+    --border: rgba(15, 15, 35, 0.10);
+    --border-strong: rgba(15, 15, 35, 0.22);
+    --text: #1b1b26;
+    --text-muted: #5d5d72;
+    --text-faint: #9494a6;
+
+    --primary-hover: #b52d0e;   /* Világos háttéren a sötétebb árnyalat olvasható */
+    --primary-soft: rgba(217, 58, 22, 0.10);
+
+    --gold: #a16207;            /* A sárga arany fehér háttéren túl halvány lenne */
+    --danger-soft: rgba(239, 68, 68, 0.10);
+    --shadow-card: 0 6px 20px rgba(20, 20, 40, 0.10);
+}
+
+html[data-theme="light"] body {
+    background: linear-gradient(180deg, #f7f7fa 0%, #e9e9f0 100%);
+}
+
+/* ============================================================
+   ALAP STÍLUSOK
+   A * minden HTML elemre vonatkozik.
+   box-sizing: border-box → a padding beleszámít az elemek méretébe
+============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    background: linear-gradient(180deg, #121218 0%, #08080c 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+}
+
+button, input, textarea {
+    font-family: inherit;
+}
+
+/* Fejléc sáv tetején
+   min-height: rögzített érték, hogy a Pénztár és a Konyha oldal
+   fejléce pontosan azonos magasságú legyen, függetlenül attól,
+   hogy melyiken van ikon-gomb és melyiken nincs. */
+header {
+    background: var(--bg-elevated);
+    padding: 10px 20px;
+    min-height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;      /* Görgetésnél is látható marad */
+    top: 0;
+    z-index: 100;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary);
+}
+
+header h1 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Az aktív rendelések száma a fejlécben */
+.order-count {
+    font-family: var(--font-display);
+    background: var(--primary-soft);
+    color: var(--primary-hover);
+    border: 1px solid var(--primary);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+/* Ikon-only gomb (pl. Beállítások a fejlécben)
+   44×44px – ez adja meg a fejléc pontos, mindkét oldalon
+   azonos magasságát (lásd header { min-height }). */
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.icon-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+/* ============================================================
+   FŐ ELRENDEZÉS: bal oldal (felvitel) + jobb oldal (lista)
+   display: flex → egymás mellé rakja a két panelt
+============================================================ */
+.main-layout {
+    display: flex;
+    height: calc(100vh - 65px);  /* Teljes magasság mínusz fejléc */
+}
+
+/* Bal panel: rendelés összerakása */
+.left-panel {
+    width: 55%;
+    padding: 16px;
+    overflow-y: auto;       /* Görgethetővé teszi ha sok az étel */
+    border-right: 1px solid var(--border);
+}
+
+/* Jobb panel: aktív rendelések listája */
+.right-panel {
+    width: 45%;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   PAGER GOMBOK (sorszám választó)
+============================================================ */
+.order-header {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.order-header label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+/* 8 oszlopos rács a 16 pager gombhoz */
+.pager-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+
+/* Egy pager gomb */
+.pager-btn {
+    font-family: var(--font-display);
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 10px 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+}
+
+.pager-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+/* Kiválasztott pager gomb - kiemelve */
+.pager-btn.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+/* Foglalt pager gomb - szürke, nem kattintható
+   opacity: 0.4 → áttetsző, hogy látszódjon hogy nem elérhető
+   cursor: not-allowed → tiltott kurzor ráhúzáskor */
+.pager-btn.occupied {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-faint);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pager-btn.occupied:hover {
+    border-color: var(--border);
+    color: var(--text-faint);
+}
+
+/* Kiválasztott sorszám megjelenítése */
+.selected-queue {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.selected-queue span {
+    font-family: var(--font-display);
+    color: var(--primary-hover);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* ============================================================
+   ÉTEL KATEGÓRIÁK ÉS GOMBOK
+============================================================ */
+.category-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin: 16px 0 8px;
+}
+
+/* Az ételek gombjai - rács elrendezésben */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);  /* 2 oszlopos rács */
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Egy étel gomb */
+.menu-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    padding: 12px 8px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;        /* Kézzel mutató egér kurzor */
+    transition: all 0.15s;  /* Sima átmenet kattintáskor */
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.menu-btn-price {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gold);
+}
+
+.menu-btn.in-cart .menu-btn-price {
+    color: var(--on-primary);
+}
+
+.menu-btn:hover {
+    border-color: var(--primary);
+    background: var(--bg-elevated-2);
+}
+
+/* Ha az étel már a kosárban van, kiemelve jelenik meg */
+.menu-btn.in-cart {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+/* ============================================================
+   KOSÁR (az összerakott rendelés)
+============================================================ */
+.cart-section {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-top: 14px;
+}
+
+.cart-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--primary-hover);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Egy kosár tétel */
+.cart-item {
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.cart-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.cart-item-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.cart-item-price {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.cart-item-line-total {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--gold);
+    font-size: 0.85rem;
+}
+
+/* Végösszeg a kosár alján */
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.cart-total span:last-child {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Törlés gomb egy kosár tételnél */
+.remove-item-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.remove-item-btn:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+/* Megjegyzés beviteli mező az étel alatt */
+.item-note {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    resize: none;           /* Ne lehessen átméretezni */
+    height: 42px;
+}
+
+.item-note::placeholder {
+    color: var(--text-faint);
+}
+
+/* Mennyiség számláló (+/-) */
+.qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qty-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;   /* Kerek gomb */
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.qty-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+.qty-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+}
+
+/* ============================================================
+   RENDELÉS KÜLDÉSE GOMB
+============================================================ */
+.send-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--on-primary);
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 16px;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: background 0.2s;
+    letter-spacing: 0.5px;
+}
+
+.send-btn:hover { background: var(--primary-hover); }
+.send-btn:disabled {
+    background: var(--bg-elevated-2);
+    color: var(--text-faint);
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   RENDELÉSEK LISTÁJA (jobb panel)
+============================================================ */
+.panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+/* Egy rendelés kártya */
+.order-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--primary);  /* Bal szegély = ÚJ */
+    box-shadow: var(--shadow-card);
+    position: relative;
+}
+
+/* Kész rendelésnél zöld szegély */
+.order-card.done {
+    border-left-color: var(--success);
+    opacity: 0.6;           /* Kicsit elhalványul ha kész */
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.order-queue {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-hover);
+}
+
+.order-card.done .order-queue {
+    color: var(--success);
+}
+
+.order-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-new {
+    background: var(--primary-soft);
+    color: var(--primary-hover);
+    border: 1px solid var(--primary);
+}
+
+.status-done {
+    background: rgba(46, 204, 113, 0.14);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+/* Egy étel sor a rendelésen belül */
+.order-item-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    font-size: 1.1rem;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-item-line .order-item-note {
+    width: 100%;
+}
+
+.order-item-line:last-child {
+    border-bottom: none;
+}
+
+.order-item-note {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-style: italic;
+}
+
+.order-item-price {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Rendelés végösszege az order kártyán */
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    padding: 8px 0 4px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
+.order-total span:last-child {
+    font-family: var(--font-display);
+    color: var(--gold);
+}
+
+/* Törlés gomb a rendelés kártyán */
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    background: none;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.15s;
+}
+
+.delete-btn:hover {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Teljesítve (pipa) gomb a rendelés kártyán – ezzel jelöli a
+   pénztáros késznek a rendelést. Ekkor kerül be a rendelés a
+   napi statisztikába. Csak italt tartalmazó rendelést CSAK itt
+   lehet késznek jelölni, mert az a konyhán meg sem jelenik. */
+.complete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    background: var(--success-strong);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.15s;
+}
+
+.complete-btn:hover { background: var(--success); }
+
+/* Ha nincs rendelés */
+.empty-state {
+    text-align: center;
+    color: var(--text-faint);
+    padding: 40px 20px;
+    font-size: 0.9rem;
+}
+
+/* ============================================================
+   NAPI STATISZTIKA GOMB
+============================================================ */
+.stats-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    padding: 11px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 10px;
+    transition: all 0.15s;
+}
+
+.stats-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+/* ============================================================
+   MODAL (felugró ablak) - Statisztikához és Beállításokhoz
+============================================================ */
+.modal-overlay {
+    display: none;          /* Alapesetben rejtett */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(4, 4, 7, 0.75);
+    backdrop-filter: blur(3px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+
+/* display: flex → láthatóvá teszi a modalt */
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal h2 {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-display);
+    color: var(--primary-hover);
+    margin-bottom: 16px;
+    font-size: 1.05rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.stat-row:last-child { border-bottom: none; }
+.stat-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.modal-close {
+    width: 100%;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 12px;
+    cursor: pointer;
+    margin-top: 16px;
+    font-size: 0.95rem;
+    transition: all 0.15s;
+}
+
+.modal-close:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+/* Napi statisztika nullázása gomb – visszafogottabb, mint a Bezárás */
+.reset-stats-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    padding: 10px;
+    cursor: pointer;
+    margin-top: 16px;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.reset-stats-btn:hover {
+    background: var(--danger-soft);
+}
+
+/* ============================================================
+   MODAL - Beállítások (étlap tétel hozzáadása/törlése)
+============================================================ */
+.add-item-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.add-item-form input,
+.add-item-form select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 10px;
+}
+
+.add-item-form input:focus,
+.add-item-form select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.add-item-form input::placeholder {
+    color: var(--text-faint);
+}
+
+.add-item-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--success);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #0a1f14;
+    font-weight: 700;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+}
+
+.add-item-btn:hover {
+    background: var(--success-strong);
+}
+
+.menu-manage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.menu-manage-row:last-child { border-bottom: none; }
+
+.menu-manage-price {
+    font-family: var(--font-display);
+    color: var(--gold);
+    margin-right: 10px;
+    font-weight: 600;
+}
+
+.menu-manage-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.menu-manage-delete:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+/* Tétel kategória jelölő (Étel/Ital) a kezelő listában */
+.menu-manage-cat {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 2px 8px;
+    margin-left: 8px;
+}
+
+/* Szerkeszthető ár-mező a kezelő listában – kilépéskor
+   (vagy Enterre) azonnal menti az új árat Firebase-be */
+.menu-price-input {
+    width: 80px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 6px 8px;
+    text-align: right;
+}
+
+.menu-price-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* ============================================================
+   MODAL - Beállítások: téma (sötét/világos mód) váltó
+============================================================ */
+.settings-section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+}
+
+.theme-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.theme-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 11px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.theme-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+/* Az éppen aktív téma gombja kiemelve */
+.theme-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+}
+
+/* ============================================================
+   MODAL - Megerősítés (a natív confirm() kiváltása)
+   A z-index nagyobb, mint a többi modalé (200), mert pl. az
+   étlaptétel törlésekor a Beállítások modal FÖLÖTT jelenik meg.
+============================================================ */
+.confirm-overlay {
+    z-index: 300;
+}
+
+.confirm-message {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.confirm-cancel-btn {
+    flex: 1;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s;
+}
+
+.confirm-cancel-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+.confirm-danger-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--danger);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.15s;
+}
+
+.confirm-danger-btn:hover {
+    background: #ff6b6b;
+}

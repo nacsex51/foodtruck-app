@@ -22,6 +22,9 @@ const ICON_PATHS = {
     speakerWave: '<path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 7a7 7 0 0 1 0 10"/>',
     speakerOff: '<path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9l5 6"/><path d="M21 9l-5 6"/>',
     plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5"/><path d="M12 19v2.5"/><path d="M2.5 12H5"/><path d="M19 12h2.5"/><path d="m5 5 1.8 1.8"/><path d="m17.2 17.2 1.8 1.8"/><path d="m19 5-1.8 1.8"/><path d="m6.8 17.2-1.8 1.8"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/>',
+    cup: '<path d="M6 3h12l-1.5 17a1.5 1.5 0 0 1-1.5 1.4H9a1.5 1.5 0 0 1-1.5-1.4L6 3Z"/><path d="M6.6 9h10.8"/>',
     close: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
     flame: '<path d="M12 3c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-1.5-1-2 1 0 3 2 3 5a6 6 0 0 1-12 0c0-4 2-5 3-7 .3 1 1 1.5 1 1.5S11 5 12 3Z"/>',
     bag: '<path d="M6 7l1.2-3.2A2 2 0 0 1 9.1 2.5h5.8a2 2 0 0 1 1.9 1.3L18 7"/><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 11a3 3 0 0 0 6 0"/>'

@@ -40,3 +40,25 @@ const statsRef = db.ref("dailyStats");
 // Az étlap (eladható tételek + áraik) tárolási helye az adatbázisban.
 // A ⚙️ Beállítások menüből lehet ide új tételt felvenni vagy meglévőt törölni.
 const menuRef = db.ref("menu");
+
+// ============================================================
+// NAPI STATISZTIKA KÖNYVELÉSE – közös segédfüggvény
+// (a pénztár és a konyha oldal is ezt hívja)
+//
+// A statisztikába CSAK a késznek (teljesítettnek) jelölt rendelések
+// kerülnek bele. Ez a függvény egy rendelés összes tételét (ételek ÉS
+// italok) hozzáadja a napi statisztikához, vagy levonja belőle.
+//
+// direction: +1 → rendelés késznek jelölve (hozzáadás)
+//            -1 → kész rendelés visszaállítva újra (levonás)
+// ============================================================
+function applyStatsForOrder(order, direction) {
+    const updates = {
+        doneCount: firebase.database.ServerValue.increment(direction)
+    };
+    (order.items || []).forEach(item => {
+        updates[`items/${item.name}`] =
+            firebase.database.ServerValue.increment(direction * item.qty);
+    });
+    statsRef.update(updates);
+}
