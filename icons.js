@@ -26,6 +26,8 @@ const ICON_PATHS = {
     moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/>',
     cup: '<path d="M6 3h12l-1.5 17a1.5 1.5 0 0 1-1.5 1.4H9a1.5 1.5 0 0 1-1.5-1.4L6 3Z"/><path d="M6.6 9h10.8"/>',
     close: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
+    wifi: '<path d="M2.5 9.5a15 15 0 0 1 19 0"/><path d="M5.5 13a10.5 10.5 0 0 1 13 0"/><path d="M8.5 16.3a6 6 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.3" fill="currentColor" stroke="none"/>',
+    wifiOff: '<path d="M2.5 9.5a15 15 0 0 1 19 0"/><path d="M5.5 13a10.5 10.5 0 0 1 13 0"/><path d="M8.5 16.3a6 6 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.3" fill="currentColor" stroke="none"/><path d="M4 4l16 16"/>',
     flame: '<path d="M12 3c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-1.5-1-2 1 0 3 2 3 5a6 6 0 0 1-12 0c0-4 2-5 3-7 .3 1 1 1.5 1 1.5S11 5 12 3Z"/>',
     bag: '<path d="M6 7l1.2-3.2A2 2 0 0 1 9.1 2.5h5.8a2 2 0 0 1 1.9 1.3L18 7"/><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 11a3 3 0 0 0 6 0"/>'
 };

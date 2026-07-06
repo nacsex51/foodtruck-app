@@ -50,6 +50,9 @@
 
     <!-- Stílusok külön fájlban: index.css (tartalomjegyzék a fájl elején) -->
     <link rel="stylesheet" href="index.css" />
+    <!-- Kapcsolat-őr stílusok (közösek a konyha oldallal): piros
+         figyelmeztető sáv + felugró értesítések (toast) -->
+    <link rel="stylesheet" href="connection.css" />
 </head>
 <body>
 
@@ -172,6 +175,17 @@
             </button>
         </div>
 
+        <!-- Adatkapcsolat: állapotjelző + kézi újracsatlakoztatás.
+             Akkor kell, ha a kapcsolat "beragadna" (pl. hosszú alvás
+             után) – egy kattintással újraépíthető. -->
+        <p class="settings-section-title">Adatkapcsolat</p>
+        <div class="conn-settings">
+            <span class="conn-status" id="connStatus"><span class="conn-dot offline"></span> Ellenőrzés…</span>
+            <button class="reconnect-btn" data-reconnect-btn onclick="forceReconnect()">
+                <span data-icon="undo" data-icon-size="15"></span> Újracsatlakoztatás
+            </button>
+        </div>
+
         <p class="settings-section-title">Étlap</p>
         <div class="add-item-form">
             <input type="text" id="newItemName" placeholder="Tétel neve (pl. Sajtos Pita)" maxlength="59" />
@@ -211,6 +225,8 @@
      JAVASCRIPT – Az alkalmazás logikája
 ============================================================ -->
 <script src="firebase-config.js"></script>
+<!-- Kapcsolat-őr + felugró értesítések (közös a konyha oldallal) -->
+<script src="connection.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

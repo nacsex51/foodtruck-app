@@ -135,7 +135,7 @@ function selectPager(num) {
     // (Biztonsági check, bár a disabled gomb elvileg nem kattintható)
     const occupiedPagers = Object.values(orders).map(o => o.queue);
     if (occupiedPagers.includes(num)) {
-        alert(`A #${num} pager már ki van adva! Várj amíg visszahozzák.`);
+        showToast(`A #${num} pager már ki van adva! Várj, amíg visszahozzák.`, "error");
         return;
     }
 
@@ -347,12 +347,12 @@ function removeFromCart(index) {
 function sendOrder() {
     // Ellenőrzések: pager kiválasztva és kosár nem üres
     if (!selectedQueue) {
-        alert("Kérlek válassz pager sorszámot!");
+        showToast("Kérlek válassz pager sorszámot!", "error");
         return;
     }
 
     if (cart.length === 0) {
-        alert("A kosár üres, adj hozzá ételeket!");
+        showToast("A kosár üres, adj hozzá ételeket!", "error");
         return;
     }
 
@@ -368,6 +368,10 @@ function sendOrder() {
     // A napi statisztikába itt még NEM kerül bele semmi – a rendelés
     // csak akkor könyvelődik, amikor késznek jelölik (pipa gomb itt,
     // vagy KÉSZ gomb a konyhán). Lásd markOrderDone() lentebb.
+    // A pager számát elmentjük a visszajelzéshez (a küldés után
+    // a selectedQueue már nullázva lesz)
+    const sentQueue = selectedQueue;
+
     ordersRef.push(order)
         .then(() => {
             // Sikeres küldés után visszaállítunk mindent
@@ -377,9 +381,12 @@ function sendOrder() {
                 "Még nincs sorszám kiválasztva";
             renderPagerButtons();   // Gombok visszaállítása (egyik sem kijelölt)
             renderCart();
+            // Pozitív visszajelzés: a rendelés biztosan beíródott az
+            // adatbázisba (a .then() csak sikeres mentés után fut le)
+            showToast(`A #${sentQueue} rendelés elküldve a konyhára.`, "success");
         })
         .catch(err => {
-            alert("Hiba a küldés során: " + err.message);
+            showToast("Hiba a küldés során: " + err.message, "error", 6000);
         });
 }
 
@@ -536,8 +543,14 @@ function renderOrders() {
 // A listenereket csak a névtelen bejelentkezés sikeres létrejötte után
 // kapcsoljuk be – a security rules hitelesítést követelnek meg, enélkül
 // a lekérdezés "permission denied" hibával elutasítódna.
+// A syncStarted őr garantálja, hogy a listenerek csak EGYSZER épüljenek
+// ki akkor is, ha a bejelentkezés később (pl. a kapcsolat-őr pótló
+// bejelentkezése után) újra lefutna – különben duplán frissülne minden.
+let syncStarted = false;
+
 firebase.auth().onAuthStateChanged((user) => {
-    if (!user) return;
+    if (!user || syncStarted) return;
+    syncStarted = true;
 
     ordersRef.on("value", (snapshot) => {
         // snapshot.val() → az adatbázisból jövő adat
@@ -753,12 +766,12 @@ function addMenuItem() {
     const category = categorySelect.value === "drink" ? "drink" : "food";
 
     if (!name) {
-        alert("Add meg a tétel nevét!");
+        showToast("Add meg a tétel nevét!", "error");
         return;
     }
     // A 0 ár is hibás bevitelnek számít (üres ár-mező is 0-t adna)
     if (!Number.isFinite(price) || price <= 0 || price > 100000) {
-        alert("Adj meg egy érvényes árat (1 és 100000 din között)!");
+        showToast("Adj meg egy érvényes árat (1 és 100000 din között)!", "error");
         return;
     }
 
@@ -767,7 +780,7 @@ function addMenuItem() {
         item => item.name.toLowerCase() === name.toLowerCase()
     );
     if (alreadyExists) {
-        alert("Már van ilyen nevű tétel az étlapon!");
+        showToast("Már van ilyen nevű tétel az étlapon!", "error");
         return;
     }
 
@@ -777,9 +790,10 @@ function addMenuItem() {
             priceInput.value = "";
             categorySelect.value = "food";
             nameInput.focus();
+            showToast(`"${name}" felkerült az étlapra.`, "success");
         })
         .catch(err => {
-            alert("Hiba a tétel hozzáadása során: " + err.message);
+            showToast("Hiba a tétel hozzáadása során: " + err.message, "error", 6000);
         });
 }
 
@@ -792,14 +806,14 @@ function updateMenuItemPrice(itemId, value) {
 
     // Ugyanaz a validáció, mint új tétel felvételekor
     if (!Number.isFinite(price) || price <= 0 || price > 100000) {
-        alert("Adj meg egy érvényes árat (1 és 100000 din között)!");
+        showToast("Adj meg egy érvényes árat (1 és 100000 din között)!", "error");
         renderMenuSettingsList();  // az eredeti ár visszaáll a mezőben
         return;
     }
 
     menuRef.child(itemId).update({ price })
         .catch(err => {
-            alert("Hiba az ár módosítása során: " + err.message);
+            showToast("Hiba az ár módosítása során: " + err.message, "error", 6000);
             renderMenuSettingsList();
         });
 }

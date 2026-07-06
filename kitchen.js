@@ -257,8 +257,14 @@ let isFirstLoad = true;  // Az első betöltésnél ne szóljon
 // A listenert csak a névtelen bejelentkezés sikeres létrejötte után
 // kapcsoljuk be – a security rules hitelesítést követelnek meg, enélkül
 // a lekérdezés "permission denied" hibával elutasítódna.
+// A syncStarted őr garantálja, hogy a listener csak EGYSZER épüljön ki
+// akkor is, ha a bejelentkezés később (pl. a kapcsolat-őr pótló
+// bejelentkezése után) újra lefutna – különben duplán frissülne minden.
+let syncStarted = false;
+
 firebase.auth().onAuthStateChanged((user) => {
-  if (!user) return;
+  if (!user || syncStarted) return;
+  syncStarted = true;
 
   ordersRef.on("value", (snapshot) => {
     const newData = snapshot.val() || {};

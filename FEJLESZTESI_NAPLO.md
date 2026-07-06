@@ -772,3 +772,62 @@ mind a 4 ikon hibátlanul betöltődik (HTTP 200, érvényes JSON,
 `display: standalone`, helyes `start_url`), a manifest-link mindkét
 oldal fejlécében jelen van, konzolhiba nincs. A tényleges telepítés
 androidos tableten csak a GitHub-ra feltöltés után próbálható ki.
+
+### 2026-07-06 – Kapcsolat-őr: adatbázis-újracsatlakoztatás gomb + automata védelem
+
+**Igény:** gomb a Beállításokban, ami újracsatlakoztatja az
+adatbázist – korábban előfordult, hogy a kapcsolat észrevétlenül
+megszakadt, és emiatt az összes rendelést törölni kellett.
+„Bombabiztos" megoldás kellett.
+
+**Megoldás – három védelmi réteg (új közös fájlok: `connection.js`
++ `connection.css`, mindkét oldal betölti):**
+
+1. **KÉZI újracsatlakoztatás** – új „Adatkapcsolat" szekció a
+   Beállításokban: élő állapotjelző (zöld pötty = Kapcsolódva,
+   piros = Nincs kapcsolat) + „Újracsatlakoztatás" gomb. A gomb
+   teljes újraépítést végez: kapcsolat bontása → újranyitás →
+   szükség esetén a névtelen bejelentkezés pótlása. Az eredményről
+   felugró értesítés (toast) tájékoztat; dupla kattintás ellen a
+   gomb a folyamat alatt letiltva („Csatlakozás…").
+2. **PIROS FIGYELMEZTETŐ SÁV** – ha 5 mp-nél tovább nincs
+   kapcsolat, a képernyő tetején (minden modal fölött) piros sáv
+   jelenik meg mindkét oldalon: „Nincs kapcsolat az adatbázissal –
+   a rendelések most NEM frissülnek!", benne saját
+   Újracsatlakoztatás gombbal. Nem lehet nem észrevenni.
+3. **AUTOMATA újracsatlakozás** – kapcsolatvesztéskor 15
+   másodpercenként magától újrapróbálkozik, továbbá azonnal
+   próbálkozik a tablet felébredésekor (visibilitychange) és a
+   hálózat visszatértekor (online esemény). A kapcsolat állapotát
+   a Firebase saját `.info/connected` jelzése adja – ez mindig a
+   valós szerver-kapcsolatot mutatja.
+
+**Kapcsolódó javítások ugyanebben a körben:**
+
+- az összes natív `alert()` lecserélve felugró értesítésre (toast)
+  – az alert kioszk/PWA módban lefagyást okozhatott (a
+  foodtruck-app-hibak.md 1. pontjának kiterjesztése);
+- sikeres rendelés-küldés után mostantól pozitív visszajelzés is
+  van („A #N rendelés elküldve a konyhára.");
+- `syncStarted` őr mindkét oldalon: a Firebase-listenerek garantáltan
+  csak egyszer épülnek ki, akkor is, ha a bejelentkezés a kapcsolat-őr
+  pótló bejelentkezése miatt később újra lefutna;
+- a sáv megjelenítése kikényszerített reflow-val történik (nem
+  requestAnimationFrame-mel), így háttérben lévő/alvó lapon is
+  garantáltan megjelenik;
+- ikon-tartalék: ha az icons.js nem töltődne be, a kapcsolat-őr
+  ikonok nélkül is működik.
+
+**Érintett fájlok:** `connection.js` (új), `connection.css` (új),
+`index.html`, `kitchen.html` (betöltés + Adatkapcsolat szekció),
+`index.js`, `kitchen.js` (alert→toast, syncStarted őr), `index.css`
+(Adatkapcsolat szekció stílusa; a sáv/toast stílusok a közös
+connection.css-be kerültek), `icons.js` (wifi/wifiOff ikonok).
+
+**Tesztelés:** preview szerveren, élő Firebase ellen, **írás
+nélkül**. Igazolva: állapotjelző „Kapcsolódva" zölddel; kézi
+újracsatlakoztatás sikeres, „helyreállt" toast megjelenik;
+szimulált kapcsolatvesztésnél 5 mp után bejön a piros sáv és elindul
+az automata újrapróbálkozás; a sáv gombja helyreállítja a
+kapcsolatot, a sáv eltűnik, az automata próbálkozás leáll – mindez a
+Pénztár ÉS a Konyha oldalon is. Konzol- és hálózati hiba nincs.

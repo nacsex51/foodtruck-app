@@ -1105,3 +1105,72 @@ header h1 {
 .confirm-danger-btn:hover {
     background: #ff6b6b;
 }
+
+/* ============================================================
+   MODAL - Beállítások: Adatkapcsolat (állapot + újracsatlakozás)
+============================================================ */
+.conn-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.conn-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Kis kerek állapotjelző pötty: zöld = él a kapcsolat, piros = nincs */
+.conn-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.conn-dot.online {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.conn-dot.offline {
+    background: var(--danger);
+    box-shadow: 0 0 6px var(--danger);
+}
+
+.reconnect-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg-elevated-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    padding: 11px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.reconnect-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+.reconnect-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+/* A kapcsolat-vesztés sáv és a felugró értesítések (toast) stílusai
+   a KÖZÖS connection.css fájlban vannak – azt a konyha oldal is
+   betölti, így a két oldalon garantáltan egyformán jelennek meg. */
