@@ -12,7 +12,12 @@
 #   - www.gstatic.com        -> Firebase SDK betöltése
 #   - fonts.googleapis.com   -> Google Fonts CSS
 #   - fonts.gstatic.com      -> Google Fonts betűfájlok
-#   - firebasedatabase.app   -> Realtime Database (adat + wss élő szinkron)
+#   - *.firebasedatabase.app -> Realtime Database. A kapcsolatot a
+#     Firebase NEM a firebase-config.js-ben szereplő pontos címen
+#     tartja fenn, hanem egy dinamikus al-szerverre irányítja át
+#     (pl. s-gke-euw1-nssiX.europe-west1.firebasedatabase.app) -
+#     ezért kell a "*." minta a pontos cím helyett, különben a
+#     böngésző folyamatosan "Nincs kapcsolat" állapotban ragad.
 #   - identitytoolkit / securetoken.googleapis.com -> névtelen bejelentkezés
 #
 # 'unsafe-inline' kell a script-src-hez és a style-src-hez, mert az
@@ -24,7 +29,7 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://foodtruscksu2-default-rtdb.europe-west1.firebasedatabase.app wss://foodtruscksu2-default-rtdb.europe-west1.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Content-Type-Options = "nosniff"
