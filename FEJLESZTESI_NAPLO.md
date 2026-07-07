@@ -853,7 +853,7 @@ egy dinamikus al-szerverre irányítja át (pl.
 folyamatosan „Nincs kapcsolat" állapotban ragadt a Netlify-verzión.
 Javítás: `*.firebasedatabase.app` minta a pontos cím helyett.
 
-**Nyitott kérdés / megfigyelés:** a fenti javítás után is
+**Nyitott kérdés / megfigyelés (lezárva):** a fenti javítás után is
 tapasztaltam, hogy az automatizált teszt-böngészőben a Netlify-verzió
 időnként „Nincs kapcsolat" állapotban ragadt (a Firebase hosszú
 lekérdezéses tartalék-csatornája 503-at kapott), miközben ugyanabban
@@ -861,9 +861,9 @@ az időablakban a GitHub Pages-verzió mindig hibátlanul csatlakozott.
 Ellenőriztem: nincs CSP-hiba a konzolban, a Firebase-kvóta egészséges
 (6/100 kapcsolat), App Check nincs bekapcsolva, az Authorized
 domains lista mindkét domaint egyformán (egyiket sem) tartalmazza –
-tehát a fejlécek nem magyarázzák. Nem sikerült kiderítenem a pontos
-okot; lehet, hogy csak a teszt-böngésző sajátossága. **Éles tableten
-mindenképp ellenőrizendő** a Netlify-link használata előtt: Beállítások
-→ Adatkapcsolat → zöld pötty + „Kapcsolódva" legyen látható.
+tehát a fejlécek nem magyarázzák. **A felhasználó saját eszközén
+kipróbálta a Netlify-linket: nincs lecsatlakozási probléma.** Így a
+jelenség valóban csak az automatizált teszt-böngésző sajátossága volt,
+nem valós hiba – a `netlify.toml` éles használatra rendben van.
 
 **Érintett fájl:** `netlify.toml` (új).
