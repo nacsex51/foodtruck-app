@@ -831,3 +831,39 @@ szimulált kapcsolatvesztésnél 5 mp után bejön a piros sáv és elindul
 az automata újrapróbálkozás; a sáv gombja helyreállítja a
 kapcsolatot, a sáv eltűnik, az automata próbálkozás leáll – mindez a
 Pénztár ÉS a Konyha oldalon is. Konzol- és hálózati hiba nincs.
+
+### 2026-07-07 – Netlify: biztonsági HTTP fejlécek (`netlify.toml`)
+
+**Igény:** a DeploySafe biztonsági ellenőrzés hiányzó fejléceket
+jelzett az újonnan indított Netlify-verzión
+(`warm-cranachan-6724da.netlify.app`): Content-Security-Policy,
+Permissions-Policy, Referrer-Policy, X-Content-Type-Options.
+
+**Megoldás:** új `netlify.toml` a repo gyökerében, `[[headers]]`
+blokkal minden útvonalra. A CSP csak a ténylegesen használt külső
+forrásokat engedi (Firebase SDK, Firebase Realtime DB/Auth, Google
+Fonts); `'unsafe-inline'` kell script- és style-src-hez, mert az app
+`onclick="..."` attribútumokkal dolgozik.
+
+**Tesztelés közben talált és javított hiba:** az első verzió a
+Firebase Realtime Database pontos címét (`foodtruscksu2-default-rtdb...`)
+engedte a `connect-src`-ben, de a Firebase a kapcsolatot valójában
+egy dinamikus al-szerverre irányítja át (pl.
+`s-gke-euw1-nssiX.europe-west1.firebasedatabase.app`) – emiatt az app
+folyamatosan „Nincs kapcsolat" állapotban ragadt a Netlify-verzión.
+Javítás: `*.firebasedatabase.app` minta a pontos cím helyett.
+
+**Nyitott kérdés / megfigyelés:** a fenti javítás után is
+tapasztaltam, hogy az automatizált teszt-böngészőben a Netlify-verzió
+időnként „Nincs kapcsolat" állapotban ragadt (a Firebase hosszú
+lekérdezéses tartalék-csatornája 503-at kapott), miközben ugyanabban
+az időablakban a GitHub Pages-verzió mindig hibátlanul csatlakozott.
+Ellenőriztem: nincs CSP-hiba a konzolban, a Firebase-kvóta egészséges
+(6/100 kapcsolat), App Check nincs bekapcsolva, az Authorized
+domains lista mindkét domaint egyformán (egyiket sem) tartalmazza –
+tehát a fejlécek nem magyarázzák. Nem sikerült kiderítenem a pontos
+okot; lehet, hogy csak a teszt-böngésző sajátossága. **Éles tableten
+mindenképp ellenőrizendő** a Netlify-link használata előtt: Beállítások
+→ Adatkapcsolat → zöld pötty + „Kapcsolódva" legyen látható.
+
+**Érintett fájl:** `netlify.toml` (új).
