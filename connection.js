@@ -20,6 +20,26 @@ function connIcon(name, size) {
 }
 
 // ============================================================
+// HTML-VÉDŐ SEGÉDFÜGGVÉNY (XSS-védelem, közös: Pénztár + Konyha)
+// Minden adatbázisból vagy beviteli mezőből származó szöveget
+// ezen KELL átfuttatni, mielőtt innerHTML-be kerül. A speciális
+// HTML-karaktereket ártalmatlan formára cseréli, így a beírt
+// szöveg mindig szövegként jelenik meg, sosem fut le kódként.
+// ============================================================
+const ESCAPE_HTML_MAP = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+};
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value).replace(/[&<>"']/g, ch => ESCAPE_HTML_MAP[ch]);
+}
+
+// ============================================================
 // FELUGRÓ ÉRTESÍTÉS (toast) – a natív alert() kiváltása.
 // A natív alert() blokkolja a renderelést (kioszk/PWA módban
 // lefagyást okozhat), a toast viszont magától eltűnik.
@@ -117,12 +137,11 @@ db.ref(".info/connected").on("value", (snapshot) => {
 // ============================================================
 function tryReconnect() {
     db.goOnline();
-    // Ha a névtelen bejelentkezés (firebase-config.js) annak idején
-    // nem sikerült (pl. induláskor nem volt net), itt pótoljuk –
-    // enélkül a security rules minden lekérést elutasítanának.
-    if (!firebase.auth().currentUser) {
-        firebase.auth().signInAnonymously().catch(() => { /* következő körben újra */ });
-    }
+    // A bejelentkezést NEM itt pótoljuk: a belépést az auth.js
+    // kezeli (e-mail/jelszavas bejelentkező képernyő). A Firebase a
+    // mentett bejelentkezést magától helyreállítja újracsatlakozáskor;
+    // ha tényleg nincs bejelentkezett felhasználó, az auth.js
+    // automatikusan a bejelentkező képernyőt mutatja.
 }
 
 function startAutoRetry() {

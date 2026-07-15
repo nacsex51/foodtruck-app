@@ -150,6 +150,9 @@ function renderOrders() {
     return orders[a].timestamp - orders[b].timestamp;  // régebbi előre
   });
 
+  // XSS-védelem: a tételnevek és megjegyzések escapeHtml()-en át
+  // kerülnek a HTML-be (a függvény a közös connection.js-ben van);
+  // a rendelés-azonosítót data-id attribútumból olvassuk vissza.
   container.innerHTML = orderKeys.map(id => {
     const order = orders[id];
     const isDone = order.status === "done";
@@ -157,7 +160,7 @@ function renderOrders() {
     return `
       <div class="order-card ${isDone ? 'done' : 'new-order'}">
         <div class="card-header">
-          <div class="queue-number">#${order.queue}</div>
+          <div class="queue-number">#${escapeHtml(order.queue)}</div>
           <div class="order-time">
             ${formatTime(order.timestamp)}
             <div class="order-time-status" style="color:${isDone ? 'var(--success)' : 'var(--urgent)'};">
@@ -172,11 +175,11 @@ function renderOrders() {
         ${kitchenItems(order).map(item => `
           <div class="item-row">
             <div class="item-main">
-              <span class="item-qty">${item.qty}×</span>
-              <span class="item-name">${item.name}</span>
+              <span class="item-qty">${escapeHtml(item.qty)}×</span>
+              <span class="item-name">${escapeHtml(item.name)}</span>
             </div>
             ${item.note
-              ? `<div class="item-note">${icon('pencil', 16)} ${item.note}</div>`
+              ? `<div class="item-note">${icon('pencil', 16)} ${escapeHtml(item.note)}</div>`
               : ''
             }
           </div>
@@ -184,10 +187,10 @@ function renderOrders() {
 
         <!-- Kész / Visszaállít gomb -->
         ${isDone
-          ? `<button class="undo-btn" onclick="setStatus('${id}', 'new')">
+          ? `<button class="undo-btn" data-id="${escapeHtml(id)}" onclick="setStatus(this.dataset.id, 'new')">
                <span data-icon="undo" data-icon-size="16"></span> Visszaállítás újra
              </button>`
-          : `<button class="done-btn" onclick="setStatus('${id}', 'done')">
+          : `<button class="done-btn" data-id="${escapeHtml(id)}" onclick="setStatus(this.dataset.id, 'done')">
                <span data-icon="checkCircle" data-icon-size="18"></span> KÉSZ
              </button>`
         }

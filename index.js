@@ -173,11 +173,14 @@ function renderMenu() {
     const foods = items.filter(item => item.category !== "drink");
     const drinks = items.filter(item => item.category === "drink");
 
-    // Egy menügomb HTML-je (közös az étel- és italrácsnak)
+    // Egy menügomb HTML-je (közös az étel- és italrácsnak).
+    // XSS-védelem: a tétel neve escapeHtml()-en át kerül a HTML-be,
+    // a kattintáskor pedig a data-name attribútumból olvassuk vissza
+    // (this.dataset.name) – így a név sosem értelmeződik kódként.
     const menuBtn = item => `
-    <button class="menu-btn" data-name="${item.name}" onclick="addToCart('${item.name.replace(/'/g, "\\'")}')">
-        <span class="menu-btn-name">${item.name}</span>
-        <span class="menu-btn-price">${item.price} din</span>
+    <button class="menu-btn" data-name="${escapeHtml(item.name)}" onclick="addToCart(this.dataset.name)">
+        <span class="menu-btn-name">${escapeHtml(item.name)}</span>
+        <span class="menu-btn-price">${escapeHtml(item.price)} din</span>
     </button>
   `;
 
@@ -196,10 +199,14 @@ function renderMenu() {
     drinksSection.style.display = drinks.length > 0 ? "" : "none";
     drinkGrid.innerHTML = drinks.map(menuBtn).join("");
 
-    // A kosárban lévő tételek kiemelése (pl. étlap-frissítés után is)
-    cart.forEach(cartItem => {
-        document.querySelectorAll(`.menu-btn[data-name="${cartItem.name}"]`)
-            .forEach(btn => btn.classList.add("in-cart"));
+    // A kosárban lévő tételek kiemelése (pl. étlap-frissítés után is).
+    // A dataset.name-et hasonlítjuk (nem attribútum-szelektort
+    // építünk), így a különleges karaktereket tartalmazó nevek sem
+    // tudják elrontani a keresést.
+    document.querySelectorAll(".menu-btn").forEach(btn => {
+        if (cart.some(i => i.name === btn.dataset.name)) {
+            btn.classList.add("in-cart");
+        }
     });
 
     hydrateIcons();
@@ -262,10 +269,12 @@ function renderCart() {
     // Minden kosár tételt kirajtolunk
     // cart.map() → végigmegy a tömbön és minden elemből HTML-t csinál
     // .join("") → az elemeket összefűzi egy szöveggé
+    // XSS-védelem: a tétel neve és a megjegyzés escapeHtml()-en át
+    // kerül a HTML-be – így a beírt szöveg sosem futhat le kódként.
     container.innerHTML = cart.map((item, index) => `
     <div class="cart-item">
       <div class="cart-item-header">
-        <span class="cart-item-name">${item.name}</span>
+        <span class="cart-item-name">${escapeHtml(item.name)}</span>
         <button class="remove-item-btn" onclick="removeFromCart(${index})" aria-label="Tétel eltávolítása" data-icon="close" data-icon-size="14"></button>
       </div>
 
@@ -288,7 +297,7 @@ function renderCart() {
         class="item-note"
         placeholder="Megjegyzés (pl. hagyma nélkül)..."
         oninput="updateNote(${index}, this.value)"
-      >${item.note}</textarea>
+      >${escapeHtml(item.note)}</textarea>
     </div>
   `).join("");
 
@@ -485,6 +494,9 @@ function renderOrders() {
     // Rendezés: legújabb elöl (timestamp alapján)
     orderKeys.sort((a, b) => orders[b].timestamp - orders[a].timestamp);
 
+    // XSS-védelem: a tételnevek és megjegyzések escapeHtml()-en át
+    // kerülnek a HTML-be; a rendelés-azonosítót data-id attribútumból
+    // olvassuk vissza (this.dataset.id) beszúrt kód helyett.
     container.innerHTML = orderKeys.map(id => {
         const order = orders[id];
         const isDone = order.status === "done";
@@ -492,7 +504,7 @@ function renderOrders() {
         return `
       <div class="order-card ${isDone ? 'done' : ''}">
         <div class="order-card-header">
-          <span class="order-queue">#${order.queue}</span>
+          <span class="order-queue">#${escapeHtml(order.queue)}</span>
           <span class="order-status ${isDone ? 'status-done' : 'status-new'}">
             ${isDone ? icon('checkCircle', 13) + ' KÉSZ' : '<span class="status-dot"></span> ÚJ'}
           </span>
@@ -501,9 +513,9 @@ function renderOrders() {
         <!-- Ételek listája a rendelésen belül -->
         ${order.items.map(item => `
           <div class="order-item-line">
-            <strong>${item.qty}× ${item.name}</strong>
+            <strong>${escapeHtml(item.qty)}× ${escapeHtml(item.name)}</strong>
             <span class="order-item-price">${(item.price || 0) * item.qty} din</span>
-            ${item.note ? `<div class="order-item-note">${icon('pencil', 12)} ${item.note}</div>` : ''}
+            ${item.note ? `<div class="order-item-note">${icon('pencil', 12)} ${escapeHtml(item.note)}</div>` : ''}
           </div>
         `).join("")}
 
@@ -516,12 +528,12 @@ function renderOrders() {
         ${isDone ? '' : `
         <!-- Pipa gomb: rendelés késznek jelölése (ekkor kerül a
              rendelés a napi statisztikába) -->
-        <button class="complete-btn" onclick="markOrderDone('${id}')">
+        <button class="complete-btn" data-id="${escapeHtml(id)}" onclick="markOrderDone(this.dataset.id)">
           <span data-icon="checkCircle" data-icon-size="16"></span> TELJESÍTVE
         </button>`}
 
         <!-- Törlés gomb (csak a pénztáros tableten van) -->
-        <button class="delete-btn" onclick="deleteOrder('${id}')">
+        <button class="delete-btn" data-id="${escapeHtml(id)}" onclick="deleteOrder(this.dataset.id)">
           <span data-icon="trash" data-icon-size="14"></span> Rendelés törlése
         </button>
       </div>
@@ -630,8 +642,8 @@ function showStats() {
     `;
         h += list.map(([name, count]) => `
       <div class="stat-row">
-        <span>${name}</span>
-        <span class="stat-value">${count} db</span>
+        <span>${escapeHtml(name)}</span>
+        <span class="stat-value">${escapeHtml(count)} db</span>
       </div>
     `).join("");
         return h;
@@ -733,20 +745,23 @@ function renderMenuSettingsList() {
         return;
     }
 
+    // XSS-védelem: a tétel neve escapeHtml()-en át kerül a HTML-be,
+    // az azonosítót data-id attribútumból olvassuk vissza.
     container.innerHTML = entries.map(([id, item]) => `
     <div class="menu-manage-row">
-      <span>${item.name}<span class="menu-manage-cat">${item.category === "drink" ? "Ital" : "Étel"}</span></span>
+      <span>${escapeHtml(item.name)}<span class="menu-manage-cat">${item.category === "drink" ? "Ital" : "Étel"}</span></span>
       <span style="display:flex;align-items:center;gap:6px;">
         <input
           type="number"
           class="menu-price-input"
-          value="${item.price}"
+          value="${escapeHtml(item.price)}"
           min="1" max="100000"
-          onchange="updateMenuItemPrice('${id}', this.value)"
-          aria-label="${item.name} ára (din)"
+          data-id="${escapeHtml(id)}"
+          onchange="updateMenuItemPrice(this.dataset.id, this.value)"
+          aria-label="${escapeHtml(item.name)} ára (din)"
         />
         <span class="menu-manage-price">din</span>
-        <button class="menu-manage-delete" onclick="deleteMenuItem('${id}')" aria-label="Tétel törlése" data-icon="close" data-icon-size="14"></button>
+        <button class="menu-manage-delete" data-id="${escapeHtml(id)}" onclick="deleteMenuItem(this.dataset.id)" aria-label="Tétel törlése" data-icon="close" data-icon-size="14"></button>
       </span>
     </div>
   `).join("");
