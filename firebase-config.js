@@ -29,7 +29,7 @@ firebase.initializeApp(firebaseConfig);
 //   2. A kapott site key-t másold be ide a két idézőjel közé
 // Amíg a site key üres, ez a blokk semmit nem csinál – az app
 // ugyanúgy működik, mint eddig.
-const APP_CHECK_SITE_KEY = "";
+const APP_CHECK_SITE_KEY = "6LdTlFUtAAAAAHEwy8brt6djLXDWXJ4QiEiKr03A";
 
 if (APP_CHECK_SITE_KEY && firebase.appCheck) {
   firebase.appCheck().activate(APP_CHECK_SITE_KEY, true);  // true → a token magától frissül
