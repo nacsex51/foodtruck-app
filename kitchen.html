@@ -13,23 +13,29 @@
        (kezdőképernyőre téve keresősáv NÉLKÜL, teljes képernyőn nyílik) -->
   <link rel="manifest" href="manifest-konyha.webmanifest" />
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
+  <!-- App Check: az adatbázist csak a saját oldalunk érheti el.
+       Csak akkor aktív, ha a firebase-config.js-ben ki van töltve
+       a site key (lásd INDULAS_TEENDOK.md) – addig nem csinál semmit. -->
+  <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check-compat.js"></script>
 
   <!-- Egységes SVG ikon-készlet (emoji helyett) -->
   <script src="icons.js"></script>
 
-  <!-- Betűtípusok: Outfit (kiemelések, számok) + Rubik (törzsszöveg, gombok) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Betűtípusok: Outfit (kiemelések, számok) + Rubik (törzsszöveg,
+       gombok) – SAJÁT tárhelyről (fonts/ mappa), nem a Google CDN-ről,
+       így nincs külső függés és gyenge neten is gyorsan betölt. -->
+  <link rel="stylesheet" href="fonts.css" />
 
   <!-- Stílusok külön fájlban: kitchen.css (tartalomjegyzék a fájl elején) -->
   <link rel="stylesheet" href="kitchen.css" />
   <!-- Kapcsolat-őr stílusok (közösek a pénztár oldallal): piros
        figyelmeztető sáv + felugró értesítések (toast) -->
   <link rel="stylesheet" href="connection.css" />
+  <!-- Bejelentkező képernyő stílusok (közösek a pénztár oldallal) -->
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -39,7 +45,13 @@
       <span data-icon="flame" data-icon-size="20"></span>
       <h1>KONYHA</h1>
     </div>
-    <span class="new-count" id="newCount">0 új</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="new-count" id="newCount">0 új</span>
+      <!-- Kijelentkezés: utána a belépő képernyő jelenik meg -->
+      <button class="logout-btn" onclick="signOutAndReload()" title="Kijelentkezés" aria-label="Kijelentkezés">
+        <span data-icon="lock" data-icon-size="15"></span> Kijelentkezés
+      </button>
+    </div>
   </header>
 
   <!-- ÚJ RENDELÉS ÉRTESÍTÉS SÁV -->
@@ -64,6 +76,8 @@
   <script src="firebase-config.js"></script>
   <!-- Kapcsolat-őr + felugró értesítések (közös a pénztár oldallal) -->
   <script src="connection.js"></script>
+  <!-- Bejelentkező képernyő (közös a pénztár oldallal) -->
+  <script src="auth.js"></script>
   <script src="kitchen.js"></script>
 </body>
 </html>

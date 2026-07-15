@@ -1,10 +1,10 @@
 {
   "rules": {
     "orders": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.provider === 'password'",
 
       "$orderId": {
-        ".write": "auth != null && (!data.exists() || !newData.exists())",
+        ".write": "auth != null && auth.provider === 'password' && (!data.exists() || !newData.exists())",
 
         ".validate": "newData.hasChildren(['queue', 'items', 'status', 'timestamp'])",
 
@@ -13,7 +13,7 @@
         },
 
         "status": {
-          ".write": "auth != null",
+          ".write": "auth != null && auth.provider === 'password'",
           ".validate": "newData.val() === 'new' || newData.val() === 'done'"
         },
 
@@ -53,8 +53,8 @@
     },
 
     "dailyStats": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.provider === 'password'",
+      ".write": "auth != null && auth.provider === 'password'",
 
       "orderCount": {
         ".validate": "newData.isNumber()"
@@ -73,8 +73,8 @@
     },
 
     "menu": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.provider === 'password'",
+      ".write": "auth != null && auth.provider === 'password'",
 
       "$itemId": {
         ".validate": "newData.hasChildren(['name', 'price'])",

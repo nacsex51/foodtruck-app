@@ -17,13 +17,30 @@ const firebaseConfig = {
 // Firebase inicializálás (elindítás)
 firebase.initializeApp(firebaseConfig);
 
-// Névtelen bejelentkezés – a Realtime Database szabályai megkövetelik,
-// hogy csak hitelesített kliens olvasson/írjon adatot. Enélkül bárki,
-// aki a databaseURL-t ismeri, közvetlen HTTP kéréssel (pl. curl) is
-// tudna adatot lekérni vagy hamis rendelést beírni.
-firebase.auth().signInAnonymously().catch((err) => {
-  console.error("Névtelen bejelentkezés sikertelen:", err);
-});
+// ============================================================
+// FIREBASE APP CHECK (opcionális, de erősen ajánlott védelem)
+// ============================================================
+// Az App Check azt garantálja, hogy CSAK a te tényleges weboldalad
+// érheti el az adatbázist – a nyilvános API-kulccsal böngészőn
+// kívülről (pl. saját szkripttel) próbálkozókat a Firebase elutasítja.
+//
+// Bekapcsolás (részletes útmutató: INDULAS_TEENDOK.md, 3. lépés):
+//   1. Firebase-konzol → App Check → reCAPTCHA v3 regisztráció
+//   2. A kapott site key-t másold be ide a két idézőjel közé
+// Amíg a site key üres, ez a blokk semmit nem csinál – az app
+// ugyanúgy működik, mint eddig.
+const APP_CHECK_SITE_KEY = "";
+
+if (APP_CHECK_SITE_KEY && firebase.appCheck) {
+  firebase.appCheck().activate(APP_CHECK_SITE_KEY, true);  // true → a token magától frissül
+}
+
+// FONTOS: bejelentkezés nélkül az app nem használható!
+// A korábbi névtelen (anonymous) bejelentkezést e-mail/jelszavas
+// belépő képernyő váltotta le (auth.js) – a névtelen mód bárkinek
+// teljes hozzáférést adott, aki ismerte az oldal címét.
+// Az adatbázis-szabályok (database.rules.json) is csak az
+// e-mail/jelszóval belépett felhasználót engedik.
 
 // Adatbázis referencia – ezen keresztül olvasunk/írunk adatot
 const db = firebase.database();

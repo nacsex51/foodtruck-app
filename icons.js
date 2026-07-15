@@ -29,7 +29,8 @@ const ICON_PATHS = {
     wifi: '<path d="M2.5 9.5a15 15 0 0 1 19 0"/><path d="M5.5 13a10.5 10.5 0 0 1 13 0"/><path d="M8.5 16.3a6 6 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.3" fill="currentColor" stroke="none"/>',
     wifiOff: '<path d="M2.5 9.5a15 15 0 0 1 19 0"/><path d="M5.5 13a10.5 10.5 0 0 1 13 0"/><path d="M8.5 16.3a6 6 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.3" fill="currentColor" stroke="none"/><path d="M4 4l16 16"/>',
     flame: '<path d="M12 3c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-1.5-1-2 1 0 3 2 3 5a6 6 0 0 1-12 0c0-4 2-5 3-7 .3 1 1 1.5 1 1.5S11 5 12 3Z"/>',
-    bag: '<path d="M6 7l1.2-3.2A2 2 0 0 1 9.1 2.5h5.8a2 2 0 0 1 1.9 1.3L18 7"/><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 11a3 3 0 0 0 6 0"/>'
+    bag: '<path d="M6 7l1.2-3.2A2 2 0 0 1 9.1 2.5h5.8a2 2 0 0 1 1.9 1.3L18 7"/><rect x="4" y="7" width="16" height="14" rx="2"/><path d="M9 11a3 3 0 0 0 6 0"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>'
 };
 
 // Fogaskerék: matematikailag generált, hogy garantáltan helyesen

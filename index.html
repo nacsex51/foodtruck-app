@@ -22,17 +22,21 @@
       Ez a három sor tölti be a Firebase könyvtárakat,
       amik nélkül nem tudna szinkronizálni a két tablet.
     -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
+    <!-- App Check: az adatbázist csak a saját oldalunk érheti el.
+         Csak akkor aktív, ha a firebase-config.js-ben ki van töltve
+         a site key (lásd INDULAS_TEENDOK.md) – addig nem csinál semmit. -->
+    <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check-compat.js"></script>
 
     <!-- Egységes SVG ikon-készlet (emoji helyett) -->
     <script src="icons.js"></script>
 
-    <!-- Betűtípusok: Outfit (kiemelések, számok, árak) + Rubik (törzsszöveg, gombok) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Betűtípusok: Outfit (kiemelések, számok, árak) + Rubik (törzsszöveg,
+         gombok) – SAJÁT tárhelyről (fonts/ mappa), nem a Google CDN-ről,
+         így nincs külső függés és gyenge neten is gyorsan betölt. -->
+    <link rel="stylesheet" href="fonts.css" />
 
     <!--
       Mentett téma (sötét/világos) alkalmazása MÉG az első kirajzolás
@@ -53,6 +57,8 @@
     <!-- Kapcsolat-őr stílusok (közösek a konyha oldallal): piros
          figyelmeztető sáv + felugró értesítések (toast) -->
     <link rel="stylesheet" href="connection.css" />
+    <!-- Bejelentkező képernyő stílusok (közösek a konyha oldallal) -->
+    <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -186,6 +192,19 @@
             </button>
         </div>
 
+        <!-- Fiók: ki van bejelentkezve + kijelentkezés.
+             Kijelentkezés után a belépő képernyő jelenik meg. -->
+        <p class="settings-section-title">Fiók</p>
+        <div class="conn-settings">
+            <span class="account-email" id="accountEmail">–</span>
+            <button class="logout-btn" onclick="signOutAndReload()">
+                <span data-icon="lock" data-icon-size="15"></span> Kijelentkezés
+            </button>
+        </div>
+        <p class="login-links" style="text-align:left;">
+            <a href="impresum.html">Impresum</a> · <a href="adatvedelem.html">Adatkezelési tájékoztató</a>
+        </p>
+
         <p class="settings-section-title">Étlap</p>
         <div class="add-item-form">
             <input type="text" id="newItemName" placeholder="Tétel neve (pl. Sajtos Pita)" maxlength="59" />
@@ -227,6 +246,8 @@
 <script src="firebase-config.js"></script>
 <!-- Kapcsolat-őr + felugró értesítések (közös a konyha oldallal) -->
 <script src="connection.js"></script>
+<!-- Bejelentkező képernyő (közös a konyha oldallal) -->
+<script src="auth.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

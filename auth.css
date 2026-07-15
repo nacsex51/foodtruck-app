@@ -1,0 +1,168 @@
+/* ============================================================
+   BEJELENTKEZŐ KÉPERNYŐ (közös: Pénztár + Konyha)
+   ============================================================
+   Az auth.js hozza létre a felületet; ez a fájl csak a kinézetét
+   adja. A színeket az oldal saját CSS-változóiból veszi (a Pénztár
+   narancs-piros, a Konyha arany), így mindkét oldalon illeszkedik.
+
+   z-index: 350 – a modalok (max. 300) FÖLÖTT, de a kapcsolat-őr
+   piros sávja (400) és az értesítések (500) ALATT, hogy a "Nincs
+   kapcsolat" figyelmeztetés bejelentkezés közben is látsszon.
+   ============================================================ */
+
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 350;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg, #0a0a0f);
+}
+
+.login-overlay.visible {
+    display: flex;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--bg-elevated, #14141c);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card, 0 6px 24px rgba(0, 0, 0, 0.35));
+    padding: 28px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.login-card h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 4px;
+    font-family: var(--font-display, 'Outfit', sans-serif);
+    font-size: 1.35rem;
+    color: var(--text, #f5f5f7);
+}
+
+.login-card h2 svg {
+    color: var(--primary, #d93a16);
+}
+
+.login-sub {
+    margin: 0 0 14px;
+    font-size: 0.88rem;
+    color: var(--text-muted, #9a9aac);
+}
+
+.login-card label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted, #9a9aac);
+    margin-bottom: 4px;
+}
+
+.login-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    font-size: 1rem;
+    font-family: var(--font-body, 'Rubik', sans-serif);
+    color: var(--text, #f5f5f7);
+    background: var(--bg, #0a0a0f);
+    border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.16));
+    border-radius: var(--radius-sm, 9px);
+    outline: none;
+}
+
+.login-card input:focus {
+    border-color: var(--primary, #d93a16);
+}
+
+/* Hibaüzenet – csak akkor látszik, ha tényleg van hiba */
+.login-error {
+    display: none;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 0.86rem;
+    color: var(--danger, #ef4444);
+    background: var(--danger-soft, rgba(239, 68, 68, 0.14));
+    border: 1px solid var(--danger, #ef4444);
+    border-radius: var(--radius-sm, 9px);
+}
+
+.login-error.visible {
+    display: block;
+}
+
+.login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-display, 'Outfit', sans-serif);
+    color: var(--on-primary, #0a0a0f);
+    background: var(--primary, #d93a16);
+    border: none;
+    border-radius: var(--radius-md, 12px);
+    cursor: pointer;
+}
+
+.login-btn:hover {
+    background: var(--primary-hover, #ff5a36);
+}
+
+.login-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Impresum + adatkezelési linkek a kártya alján – ez a nyilvánosan
+   látható belépő oldal, ezért innen kell elérhetőnek lenniük */
+.login-links {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-faint, #5c5c6e);
+}
+
+.login-links a {
+    color: var(--text-muted, #9a9aac);
+    text-decoration: underline;
+}
+
+/* Kijelentkezés gomb (Beállítások modal / konyha fejléc) */
+.logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: var(--font-body, 'Rubik', sans-serif);
+    color: var(--text-muted, #9a9aac);
+    background: transparent;
+    border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.16));
+    border-radius: var(--radius-sm, 9px);
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    color: var(--text, #f5f5f7);
+    border-color: var(--danger, #ef4444);
+}
+
+/* A bejelentkezett fiók e-mail címe a Beállításokban */
+.account-email {
+    font-size: 0.88rem;
+    color: var(--text-muted, #9a9aac);
+    word-break: break-all;
+}
