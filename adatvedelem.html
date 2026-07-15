@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adatkezelési tájékoztató</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <!--
+      ADATKEZELÉSI TÁJÉKOZTATÓ (obaveštenje o obradi podataka o ličnosti)
+      a szerb Zakon o zaštiti podataka o ličnosti ("Sl. glasnik RS",
+      br. 87/2018) alapján.
+
+      A [KITÖLTENDŐ: ...] részeket a saját adataiddal kell kicserélni.
+    -->
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-elevated: #14141c;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f5f5f7;
+            --text-muted: #9a9aac;
+            --primary: #d93a16;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 32px 18px 60px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Rubik', 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        }
+        main { max-width: 640px; margin: 0 auto; }
+        h1 {
+            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            font-size: 1.6rem;
+            margin: 0 0 6px;
+        }
+        .sub { color: var(--text-muted); font-size: 0.92rem; margin: 0 0 26px; }
+        section {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+        h2 {
+            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            font-size: 1.05rem;
+            margin: 0 0 10px;
+            color: var(--primary);
+        }
+        p, li { font-size: 0.95rem; }
+        p:last-child { margin-bottom: 0; }
+        ul { margin: 8px 0; padding-left: 20px; }
+        .todo { color: #ffb020; font-weight: 600; }
+        a { color: var(--text-muted); }
+        .back {
+            display: inline-block;
+            margin-top: 18px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Adatkezelési tájékoztató</h1>
+    <p class="sub">A személyes adatok védelméről szóló szerb törvény
+        (Zakon o zaštiti podataka o ličnosti, „Sl. glasnik RS", br. 87/2018) alapján.</p>
+
+    <section>
+        <h2>Ki kezeli az adatokat?</h2>
+        <p>Az adatkezelő: <span class="todo">[KITÖLTENDŐ: vállalkozás neve, székhelye]</span>,
+            elérhetőség: <span class="todo">[KITÖLTENDŐ: e-mail cím]</span>.
+            A vállalkozás további adatai az <a href="impresum.html">Impresumban</a> találhatók.</p>
+    </section>
+
+    <section>
+        <h2>Milyen adatokat kezelünk, és miért?</h2>
+        <p>Ez a weboldal a foodtruck belső rendeléskezelő rendszere (pénztár- és
+            konyhai kijelző). Vásárlói fiók, regisztráció, vásárlói űrlap és online
+            fizetés <strong>nincs</strong> – az oldal a vásárlókról szándékosan nem
+            gyűjt adatot.</p>
+        <ul>
+            <li><strong>Technikai naplók (IP-cím):</strong> a tárhely- és
+                adatbázis-szolgáltató (lásd lent) a szerverei működtetése és
+                védelme érdekében automatikusan naplózhatja a látogatók
+                IP-címét. Ezt a szolgáltatók saját szabályzataik szerint,
+                korlátozott ideig tárolják.</li>
+            <li><strong>Dolgozói bejelentkezési adatok:</strong> a rendszert
+                használó dolgozók e-mail címét és jelszavát a Google Firebase
+                Authentication tárolja, kizárólag a belépés ellenőrzésére.</li>
+            <li><strong>Rendelési adatok:</strong> a rendelések tételei,
+                sorszáma és időpontja – személyes adatot nem tartalmaznak.
+                Belső szabályunk, hogy a dolgozók a megjegyzés mezőbe
+                <strong>nem írhatnak</strong> vevőt azonosító adatot (nevet,
+                telefonszámot).</li>
+            <li><strong>Sütik, követés:</strong> az oldal <strong>nem használ</strong>
+                sütiket, hirdetési vagy statisztikai követőt (nincs Google
+                Analytics, Facebook Pixel stb.). A böngésző helyi tárolójában
+                csak technikai beállítás (téma, étlap-gyorsítótár) kerül
+                mentésre, ami személyes adatot nem tartalmaz.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Ki dolgozza fel az adatokat (adatfeldolgozók)?</h2>
+        <ul>
+            <li><strong>Google Ireland Limited</strong> (Firebase Realtime
+                Database és Authentication) – Gordon House, Barrow Street,
+                Dublin 4, Írország. Az adatbázis tárolási helye az Európai
+                Unión belül van (europe-west1, Belgium).</li>
+            <li><strong>Weboldal tárhely:</strong>
+                <span class="todo">[KITÖLTENDŐ: Netlify, Inc. (USA) vagy GitHub, Inc. (USA)
+                – a ténylegesen használt szolgáltató]</span>. A tárhelyszolgáltató
+                szerverei az Európai Unión kívül is lehetnek; a szolgáltató a
+                saját adatvédelmi szabályzata szerint jár el.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Meddig tároljuk az adatokat?</h2>
+        <p>Az aktív rendelések a teljesítés után törlésre kerülnek a
+            rendeléslistából; a napi összesítő statisztika tételnév + darabszám
+            formában tárolódik, személyes adat nélkül. A dolgozói fiókok a
+            munkaviszony végéig maradnak meg.</p>
+    </section>
+
+    <section>
+        <h2>Milyen jogaid vannak?</h2>
+        <p>A törvény alapján bárki kérhet tájékoztatást az adatai kezeléséről,
+            kérheti azok helyesbítését vagy törlését a fenti elérhetőségen.
+            Panasszal az illetékes felügyeleti hatósághoz lehet fordulni:</p>
+        <p><strong>Poverenik za informacije od javnog značaja i zaštitu podataka
+            o ličnosti</strong><br />
+            Bulevar kralja Aleksandra 15, 11120 Beograd, Szerbia<br />
+            <a href="https://www.poverenik.rs" rel="noopener">www.poverenik.rs</a></p>
+    </section>
+
+    <p><a href="impresum.html">Impresum →</a></p>
+    <a class="back" href="index.html">← Vissza az alkalmazáshoz</a>
+</main>
+</body>
+</html>

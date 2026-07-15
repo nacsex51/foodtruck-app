@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Impresum – szolgáltatói adatok</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <!--
+      IMPRESUM (Impresum) – a szerb Zakon o elektronskoj trgovini
+      ("Sl. glasnik RS", br. 41/2009, 95/2013, 52/2019) által előírt
+      kötelező szolgáltatói adatok.
+
+      FONTOS: a [KITÖLTENDŐ: ...] részeket a saját nyilvántartási
+      adataiddal kell kicserélni (APR-kivonat, adóhatósági iratok)!
+      Ha valamelyik adatban bizonytalan vagy, egy helyi könyvelő
+      vagy ügyvéd rá tud nézni.
+    -->
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-elevated: #14141c;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f5f5f7;
+            --text-muted: #9a9aac;
+            --primary: #d93a16;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 32px 18px 60px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Rubik', 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        }
+        main {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            font-size: 1.6rem;
+            margin: 0 0 6px;
+        }
+        .sub {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            margin: 0 0 26px;
+        }
+        section {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+        h2 {
+            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            font-size: 1.05rem;
+            margin: 0 0 10px;
+            color: var(--primary);
+        }
+        dl { margin: 0; }
+        dt {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 12px;
+        }
+        dt:first-child { margin-top: 0; }
+        dd { margin: 2px 0 0; }
+        .todo {
+            color: #ffb020;
+            font-weight: 600;
+        }
+        a { color: var(--text-muted); }
+        .back {
+            display: inline-block;
+            margin-top: 18px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Impresum</h1>
+    <p class="sub">Kötelező szolgáltatói adatok a szerb elektronikus kereskedelemről szóló
+        törvény (Zakon o elektronskoj trgovini, „Sl. glasnik RS", br. 41/2009, 95/2013, 52/2019)
+        alapján.</p>
+
+    <section>
+        <h2>A szolgáltató (vállalkozás) adatai</h2>
+        <dl>
+            <dt>Vállalkozás neve</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: a vállalkozás APR-ben bejegyzett teljes neve]</span></dd>
+
+            <dt>Vállalkozási forma</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: pl. preduzetnik (egyéni vállalkozó) vagy d.o.o.]</span></dd>
+
+            <dt>Székhely / telephely</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: utca, házszám, irányítószám, település, Szerbia]</span></dd>
+
+            <dt>PIB (poreski identifikacioni broj – adóazonosító szám)</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: 9 számjegyű PIB]</span></dd>
+
+            <dt>Matični broj (APR nyilvántartási szám)</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: 8 számjegyű matični broj]</span></dd>
+
+            <dt>Nyilvántartó szerv</dt>
+            <dd>Agencija za privredne registre (APR), Beograd</dd>
+
+            <dt>Elérhetőség (e-mail)</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: kapcsolattartó e-mail cím]</span></dd>
+        </dl>
+    </section>
+
+    <section>
+        <h2>Tárhely- és infrastruktúra-szolgáltatók</h2>
+        <dl>
+            <dt>Weboldal tárhely</dt>
+            <dd><span class="todo">[KITÖLTENDŐ: a ténylegesen használt szolgáltató –
+                pl. Netlify, Inc., 512 2nd Street, San Francisco, CA 94107, USA
+                vagy GitHub, Inc. (GitHub Pages), 88 Colin P. Kelly Jr. St, San Francisco, CA 94107, USA –
+                a nem használt törlendő]</span></dd>
+
+            <dt>Adatbázis (valós idejű rendeléskezelés)</dt>
+            <dd>Google Ireland Limited – Firebase Realtime Database,
+                Gordon House, Barrow Street, Dublin 4, Írország
+                (adattárolás helye: europe-west1, Belgium)</dd>
+        </dl>
+    </section>
+
+    <p><a href="adatvedelem.html">Adatkezelési tájékoztató →</a></p>
+    <a class="back" href="index.html">← Vissza az alkalmazáshoz</a>
+</main>
+</body>
+</html>
