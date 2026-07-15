@@ -53,10 +53,18 @@ engednek hozzáférést (a régi névtelen belépés kizárva).
 Ez megakadályozza, hogy bárki a nyilvános API-kulccsal, böngészőn kívülről
 írjon az adatbázisba.
 
-1. Firebase-konzol → **Build → App Check** (vagy Release & Monitor alatt).
-2. Az **Apps** fülön kattints a webalkalmazásodra → **Register** →
-   válaszd a **reCAPTCHA v3** szolgáltatót.
-3. A regisztrációhoz a Google ad egy **site key**-t (kulcsot) – másold ki.
+1. Először hozz létre egy reCAPTCHA-kulcspárt:
+   https://www.google.com/recaptcha/admin/create – címke: pl.
+   `foodtruck-app`; típus: **reCAPTCHA v3** (pontszám-alapú; ha az
+   oldal Enterprise-t ajánl, keresd a "classic key" opciót);
+   domainek: a ténylegesen használt címek `https://` nélkül, pl.
+   `nacsex51.github.io` és/vagy `warm-cranachan-6724da.netlify.app`.
+   Eredmény: egy **site key** (nyilvános) és egy **secret key** (titkos).
+2. Firebase-konzol → **Build → App Check** → az **Apps** fülön
+   kattints a webalkalmazásodra → **Register** → **reCAPTCHA v3** →
+   a **"reCAPTCHA secret key" mezőbe a TITKOS kulcsot** másold be.
+   (A titkos kulcs SOHA ne kerüljön a kódba vagy GitHubra!)
+3. A **site key**-t (a nyilvánosat) másold ki.
 4. A gépeden nyisd meg a `firebase-config.js` fájlt, és a
    `const APP_CHECK_SITE_KEY = "";` sorban a két idézőjel közé illeszd be
    a kulcsot, például: `const APP_CHECK_SITE_KEY = "6LdXXXXXXXX";`
