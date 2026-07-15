@@ -4,32 +4,47 @@
 # Statikus oldal, nincs build lépés (a fájlok a repo gyökeréből
 # mennek ki változtatás nélkül).
 #
-# A "for = /*" minden útvonalra (html, js, css, manifest, ikon)
-# ráteszi az alábbi fejléceket.
+# A "for = /*" minden útvonalra (html, js, css, manifest, ikon,
+# betűtípus) ráteszi az alábbi fejléceket.
 #
 # A Content-Security-Policy csak azokat a külső forrásokat engedi,
 # amiket az app ténylegesen használ:
-#   - www.gstatic.com        -> Firebase SDK betöltése
-#   - fonts.googleapis.com   -> Google Fonts CSS
-#   - fonts.gstatic.com      -> Google Fonts betűfájlok
+#   - www.gstatic.com        -> Firebase SDK (+ reCAPTCHA az App
+#     Check-hez, ha be van kapcsolva)
+#   - www.google.com         -> reCAPTCHA (App Check) szkript + frame
 #   - *.firebasedatabase.app -> Realtime Database. A kapcsolatot a
 #     Firebase NEM a firebase-config.js-ben szereplő pontos címen
 #     tartja fenn, hanem egy dinamikus al-szerverre irányítja át
 #     (pl. s-gke-euw1-nssiX.europe-west1.firebasedatabase.app) -
 #     ezért kell a "*." minta a pontos cím helyett, különben a
 #     böngésző folyamatosan "Nincs kapcsolat" állapotban ragad.
-#   - identitytoolkit / securetoken.googleapis.com -> névtelen bejelentkezés
+#   - identitytoolkit / securetoken.googleapis.com -> e-mail/jelszavas
+#     bejelentkezés (Firebase Auth)
+#   - content-firebaseappcheck.googleapis.com -> App Check token
+#     (csak akkor forgalmaz, ha az App Check be van kapcsolva)
+#
+# A betűtípusok (Outfit, Rubik) mostantól a saját tárhelyről jönnek
+# (fonts/ mappa), ezért a fonts.googleapis.com / fonts.gstatic.com
+# forrásokra már NINCS szükség - kikerültek a listából.
 #
 # 'unsafe-inline' kell a script-src-hez és a style-src-hez, mert az
 # app onclick="..." attribútumokkal és néhány inline style="..."
 # résszel dolgozik (nem külön eseménykezelő fájlokkal) - ezek nélkül
 # a gombok nem működnének.
+#
+# Strict-Transport-Security (HSTS): a böngésző egy éven át csak
+# titkosított (HTTPS) kapcsolaton hajlandó elérni az oldalt.
+#
+# X-Frame-Options: DENY + frame-ancestors 'none': az oldalt senki
+# nem ágyazhatja be a saját weboldalába (kattintás-eltérítés ellen).
 # ============================================================
 
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://content-firebaseappcheck.googleapis.com; frame-src https://www.google.com; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Frame-Options = "DENY"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=(), interest-cohort=()"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Content-Type-Options = "nosniff"
