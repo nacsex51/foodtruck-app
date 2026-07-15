@@ -867,3 +867,84 @@ jelenség valóban csak az automatizált teszt-böngésző sajátossága volt,
 nem valós hiba – a `netlify.toml` éles használatra rendben van.
 
 **Érintett fájl:** `netlify.toml` (új).
+
+### 2026-07-15 – Indulási checklist: bejelentkezés, XSS-javítás, jogi oldalak, fejlécek, SDK-frissítés, saját betűtípusok
+
+**Igény:** az indulás előtti állapotfelmérés (checklist artifact) nyitott
+tételeinek megvalósítása, külön branchen (`feature/indulasi-checklist`),
+alapos ellenőrzéssel. Emellett a Netlify-fagyás kivizsgálása és ingyenes
+tárhely-ajánlás.
+
+**Megoldások (checklist-tétel szerint):**
+
+1. **Bejelentkező képernyő (crit-1):** új `auth.js` + `auth.css` – teljes
+   képernyős, mindkét oldalon közös e-mail/jelszavas belépő (Firebase
+   Authentication), magyar hibaüzenetekkel. A névtelen (anonymous)
+   bejelentkezés MEGSZŰNT (`firebase-config.js`, `connection.js`).
+   A belépést az eszköz megjegyzi (eszközönként egyszeri belépés).
+   Kijelentkezés: Beállítások → Fiók (pénztár), fejléc gomb (konyha).
+   A `database.rules.json` minden szabálya mostantól
+   `auth.provider === 'password'`-ot követel (a névtelen mód a
+   szabályok szintjén is kizárva). FONTOS: élesítés előtt a
+   Firebase-konzolban fiókot kell létrehozni és a szabályt publikálni –
+   lépésről lépésre: `INDULAS_TEENDOK.md`.
+2. **XSS-javítás (crit-2):** új közös `escapeHtml()` (`connection.js`);
+   minden adatbázisból/bevitelből származó szöveg (tételnév, megjegyzés,
+   statisztika-név) escape-elve kerül innerHTML-be (`index.js`:
+   renderMenu, renderCart, renderOrders, showStats,
+   renderMenuSettingsList; `kitchen.js`: renderOrders). Az inline
+   onclick-paraméterek data-attribútumra váltottak
+   (`this.dataset.name` / `this.dataset.id`), a kosár-kiemelés nem épít
+   attribútum-szelektort.
+3. **App Check előkészítés (crit-5):** app-check-compat SDK betöltve,
+   `APP_CHECK_SITE_KEY` konstans a `firebase-config.js`-ben – amíg üres,
+   inaktív; bekapcsolás a konzolban + kulcs beillesztése
+   (INDULAS_TEENDOK.md 3. lépés). CSP előre engedélyezi a szükséges
+   reCAPTCHA/App Check végpontokat.
+4. **Jogi oldalak (legal-1, legal-2):** új `impresum.html` +
+   `adatvedelem.html` szerb jogszabályi hivatkozásokkal (Zakon o
+   elektronskoj trgovini; Zakon o zaštiti podataka o ličnosti,
+   Poverenik). A cégadatok helyén sárga `[KITÖLTENDŐ]` jelölők – ezeket
+   a felhasználónak kell kitöltenie. Linkek: belépő képernyő alja +
+   Beállítások modal.
+5. **Fejléc-keményítés (harden-1, harden-2):** `netlify.toml` –
+   Strict-Transport-Security (1 év), X-Frame-Options: DENY,
+   CSP frame-ancestors 'self'→'none'.
+6. **Firebase SDK frissítés (harden-4):** 9.23.0 → 12.16.0 (compat,
+   mindkét oldal). Élő teszten igazolva: adatbázis-kapcsolat,
+   ServerValue.increment, auth API rendben.
+7. **Saját betűtípusok (harden-5):** Outfit + Rubik variable-woff2
+   fájlok letöltve (`fonts/`, latin + latin-ext – magyar ő/ű és szerb
+   latin karakterekkel), új `fonts.css`; a Google Fonts linkek és a
+   CSP fonts.googleapis.com/fonts.gstatic.com forrásai eltávolítva.
+8. **Új ikon:** `lock` (`icons.js`) – belépő képernyő + kijelentkezés gomb.
+
+**Netlify-fagyás elemzése (a felhasználó kérdésére):** a tünet („egy idő
+után kifagy, GitHub Pages-en nincs gond") egybevág a 2026-07-07-én már
+azonosított és javított CSP-hibával (a Firebase dinamikus al-szerverének
+tiltása miatt az app „Nincs kapcsolat"-ban ragadt). A javítás
+(d35ea5d) óta a felhasználó saját eszközén a Netlify hibátlan volt;
+a mostani tapasztalat valószínűleg a javítás ELŐTTI időszakból származik.
+Döntés a felhasználónál: maradhat GitHub Pages (hátrány: nincs biztonsági
+fejléc), visszaállhat Netlify-ra, vagy átállhat Cloudflare Pages /
+Firebase Hostingra (mindkettő ingyenes és támogat fejléceket).
+
+**Tesztelés:** helyi statikus szerveren (preview), élő Firebase ellen,
+**adatbázis-írás nélkül**. Igazolva: SDK 12.16.0 betölt, konzolhiba
+nincs egyik oldalon sem; a belépő overlay a teljes nézetet takarja
+(z-index 350, elementFromPoint-teszt), sötét és világos módban is jó;
+DB-kapcsolat él (.info/connected = true); szándékosan hibás
+belépési próbánál a Firebase `auth/operation-not-allowed` kódot ad
+(az Email/Password mód még nincs bekapcsolva a konzolban – várt
+viselkedés), a magyar hibaüzenet-fordítás működik; XSS-próba
+(`<img onerror>` minden szövegmezőben, lokális adattal) egyik render
+függvénynél sem futott le, minden szövegként jelenik meg, a
+data-name/data-id oda-vissza út pontos; a betűtípusok kizárólag
+helyből töltődnek (hálózati napló ellenőrizve), a jogi oldalak
+hibátlanul renderelődnek. Az élő adatbázishoz nem nyúltam.
+
+**Érintett fájlok:** `auth.js`, `auth.css`, `fonts.css`, `fonts/`,
+`impresum.html`, `adatvedelem.html`, `INDULAS_TEENDOK.md` (újak);
+`index.html`, `kitchen.html`, `index.js`, `kitchen.js`,
+`connection.js`, `firebase-config.js`, `database.rules.json`,
+`netlify.toml`, `icons.js` (módosítva).
