@@ -88,9 +88,11 @@ function loginErrorMessage(code) {
     // Akkor jelentkezik, ha az oldal címe nincs rajta az API-kulcs
     // engedélyezett cím-listáján (Google Cloud Console → Credentials).
     if (typeof code === "string" && code.indexOf("requests-from-referer") !== -1) {
-        return "Erről a címről nincs engedélyezve a bejelentkezés. "
-             + "Vedd fel az oldal címét az API-kulcs engedélyezett "
-             + "címei közé (lásd INDULAS_TEENDOK.md, 5. lépés).";
+        return "Erről a címről (" + window.location.origin + ") nincs "
+             + "engedélyezve a bejelentkezés. Vedd fel az API-kulcs "
+             + "engedélyezett címei közé csillaggal a végén, pl. "
+             + window.location.origin + "/* (lásd INDULAS_TEENDOK.md, "
+             + "5. lépés), majd várj kb. 5 percet és próbáld újra!";
     }
 
     switch (code) {

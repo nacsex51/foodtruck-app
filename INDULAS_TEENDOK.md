@@ -119,12 +119,20 @@ SMS-nél biztonságosabb.
 2. Az API keys listában kattints a **Browser key (auto created by Firebase)**
    nevű kulcsra.
 3. Az **Application restrictions** résznél válaszd a **Websites** opciót,
-   és add hozzá a ténylegesen használt címeket, pl.:
-   - `https://NEVED.github.io/*` (GitHub Pages)
-   - `https://warm-cranachan-6724da.netlify.app/*` (Netlify)
+   és add hozzá a ténylegesen használt címeket. A csillag (`/*`) a
+   végén KÖTELEZŐ – az engedi az aloldalakat (pl. /foodtruck-app/) is:
+   - `https://nacsex51.github.io/*` (GitHub Pages – a jelenlegi éles cím)
    - a saját domained, ha lesz: `https://sajatdomain.rs/*`
-4. **Save**. (Ez nem teszi titkossá a kulcsot, de más weboldalak nem
-   tudják használni.)
+   - ha később új tárhelyet veszel használatba (pl. Netlify), annak a
+     címét is ide kell felvenni, ugyanígy csillaggal
+4. **Save**, majd **várj kb. 5 percet** – a módosítás nem azonnal él!
+   (Ez nem teszi titkossá a kulcsot, de más weboldalak nem tudják
+   használni.)
+
+> **Ha a belépésnél „Erről a címről nincs engedélyezve a bejelentkezés"
+> hibát látsz:** a hibaüzenetben mostantól benne van a pontos cím, amit
+> ebbe a listába fel kell venni (csillaggal a végén). Felvétel után
+> várj 5 percet, töltsd újra az oldalt, és próbáld újra.
 
 ## 6. lépés – Költségriasztás beállítása (ajánlott)
 
