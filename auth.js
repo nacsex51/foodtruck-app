@@ -45,6 +45,17 @@
 // A Firebase angol hibakódjait fordítjuk érthető üzenetre.
 // ============================================================
 function loginErrorMessage(code) {
+    // Ez a hibakód tartalmazza a lap címét is (pl.
+    // "auth/requests-from-referer-http://localhost:5180/-are-blocked"),
+    // ezért mintára kell illeszteni, nem pontos egyezésre.
+    // Akkor jelentkezik, ha az oldal címe nincs rajta az API-kulcs
+    // engedélyezett cím-listáján (Google Cloud Console → Credentials).
+    if (typeof code === "string" && code.indexOf("requests-from-referer") !== -1) {
+        return "Erről a címről nincs engedélyezve a bejelentkezés. "
+             + "Vedd fel az oldal címét az API-kulcs engedélyezett "
+             + "címei közé (lásd INDULAS_TEENDOK.md, 5. lépés).";
+    }
+
     switch (code) {
         case "auth/invalid-email":
             return "Az e-mail cím formátuma hibás. Ellenőrizd, majd próbáld újra!";
