@@ -948,3 +948,52 @@ hibátlanul renderelődnek. Az élő adatbázishoz nem nyúltam.
 `index.html`, `kitchen.html`, `index.js`, `kitchen.js`,
 `connection.js`, `firebase-config.js`, `database.rules.json`,
 `netlify.toml`, `icons.js` (módosítva).
+
+### 2026-07-16 – Bejelentkezés felhasználónévvel (e-mail cím helyett)
+
+**Igény:** a dolgozóknak ne kelljen e-mail címet beírni a belépéshez,
+csak egy egyszerű felhasználónevet. („Nem baj, ha az adatbázisban
+máshogy tárolódik el.")
+
+**Háttér:** a Firebase Authentication e-mail/jelszavas módja mindig
+e-mail címet vár – felhasználónév-alapú belépést natívan nem tud.
+
+**Megoldás (`auth.js`):** a felületen felhasználónév-mező van; a
+Firebase felé küldött e-mail címet a kód állítja össze a háttérben egy
+rögzített végződéssel (`LOGIN_EMAIL_DOMAIN = "foodtruck.local"`):
+
+- `usernameToEmail("penztar")` → `penztar@foodtruck.local` (trim +
+  kisbetűsítés; ha valaki mégis teljes címet ír be, azt változtatás
+  nélkül elfogadjuk – nem duplázza a végződést)
+- `emailToUsername()` – a Beállítások „Fiók" sorában a végződés
+  levágva jelenik meg, a dolgozó a saját felhasználónevét látja
+- `USERNAME_PATTERN` – ékezet/szóköz esetén saját, érthető magyar
+  üzenet, még a Firebase-hívás előtt (különben `auth/invalid-email`
+  hibakódot kapna a felhasználó)
+- a mező `type="email"` → `type="text"`, `autocapitalize="none"`,
+  `spellcheck="false"` (tableten a nagybetűsítés zavaró lenne)
+- a hibaüzenetek szövege „e-mail cím" → „felhasználónév"
+
+A végződés **nem valódi postafiók** – csak a Firebase belső
+azonosítója, sehol nem jelenik meg a felületen.
+
+**Útmutató-frissítés (`INDULAS_TEENDOK.md`, 1. lépés):** a fiókokat a
+konzolban `penztar@foodtruck.local` / `konyha@foodtruck.local`
+formában kell létrehozni. **Fontos pontosítás:** mivel a végződés nem
+valódi postafiók, a konzol „Reset password" gombja (e-mailt küldene)
+NEM használható – jelszócsere: fiók törlése és újra létrehozása.
+
+**Tesztelés:** preview szerveren, élő Firebase ellen, **írás nélkül**.
+Igazolva képernyőképekkel és egységteszt-jellegű ellenőrzéssel:
+a mező felirata „Felhasználónév", a régi e-mail mező megszűnt;
+`usernameToEmail` minden ága helyes (sima név, szóközös/nagybetűs,
+teljes cím, idegen domain); `emailToUsername` a végződést levágja,
+idegen címet érintetlenül hagy; a karakter-ellenőrzés az 5 érvényes
+mintát elfogadja, a 4 érvénytelent (ékezet, szóköz, felkiáltójel,
+üres) elutasítja. Valódi gépeléssel: „pénztár" → magyar figyelmeztetés;
+„penztar" + jelszó → a kérés eljut a Firebase-ig, és a localhostot az
+API-kulcs referer-korlátozása (helyesen) elutasítja – ez a védelem
+működésének bizonyítéka, élesben ez sikeres belépés lesz.
+Konzolhiba egyik oldalon sincs.
+
+**Érintett fájlok:** `auth.js`, `INDULAS_TEENDOK.md`.

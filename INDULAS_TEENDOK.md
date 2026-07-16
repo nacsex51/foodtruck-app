@@ -20,17 +20,35 @@ A sorrend fontos: haladj fentről lefelé!
    **Email/Password** → kapcsold **Enable** állásba → **Save**.
    (A második kapcsolót, az "Email link"-et NE kapcsold be.)
 4. Felül a **Users** fül → **Add user** gomb:
-   - **E-mail:** egy általad használt cím (lehet pl. a Gmail-címed,
-     vagy készíthetsz kettőt: egyet a pénztárnak, egyet a konyhának –
-     így a naplókból később az is látszik, melyik tablet csinált mit).
+   - **E-mail:** itt a Firebase e-mail címet kér, de a dolgozók az appban
+     **csak a felhasználónevet** fogják beírni. Ezért a felhasználónevet
+     a `@foodtruck.local` végződéssel add meg, például:
+     - `penztar@foodtruck.local` → az appban a felhasználónév: **penztar**
+     - `konyha@foodtruck.local` → az appban a felhasználónév: **konyha**
+
+     Két külön fiókkal később az is látszik, melyik tablet mit csinált.
+     Ez a végződés **nem valódi e-mail cím**, nem kell hozzá postafiók –
+     csak a Firebase belső azonosítója, és sehol nem jelenik meg a
+     képernyőn.
    - **Jelszó:** válassz **erős, egyedi jelszót** (legalább 12 karakter,
      ne a máshol használt jelszavad legyen). Írd fel biztonságos helyre!
-5. Kész! Ezzel az e-mail + jelszó párossal lehet majd belépni mindkét
-   tableten. A tablet megjegyzi a belépést, tehát ezt csak egyszer kell
-   beírni eszközönként.
+5. Kész! A tableteken ezután **csak a felhasználónevet** (pl. `penztar`)
+   és a jelszót kell beírni – a végződést az app magától hozzáteszi.
+   A tablet megjegyzi a belépést, tehát ezt csak egyszer kell beírni
+   eszközönként.
 
-> **Tipp:** ha valaha jelszót akarsz cserélni, ugyanitt a Users fülön a
-> fiók melletti ⋮ menü → "Reset password".
+> **A felhasználónévben** csak ékezet nélküli kisbetű, szám, pont,
+> kötőjel és aláhúzás lehet (ékezet és szóköz nem). Ha másik végződést
+> szeretnél a `@foodtruck.local` helyett, az az `auth.js` fájl
+> `LOGIN_EMAIL_DOMAIN` sorában állítható – de akkor a konzolban a már
+> létrehozott fiókokat is át kell nevezni!
+
+> **Jelszócsere később:** mivel a `@foodtruck.local` nem valódi
+> postafiók, a konzol "Reset password" gombja (ami e-mailt küldene) itt
+> NEM használható – az üzenet nem érkezne meg sehova. Jelszót így
+> cserélj: a **Users** fülön a fiók melletti ⋮ menü → **Delete account**,
+> majd hozd létre újra ugyanazzal az e-mail címmel és az új jelszóval.
+> A dolgozóknak ezután a tableteken újra be kell jelentkezniük.
 
 ## 2. lépés – Az új adatbázis-szabályok publikálása
 

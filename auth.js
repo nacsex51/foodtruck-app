@@ -3,7 +3,7 @@
 // A firebase-config.js és a connection.js UTÁN kell betölteni.
 //
 // Amíg nincs bejelentkezett felhasználó, egy teljes képernyős
-// bejelentkező felület takarja az appot – e-mail címmel és
+// bejelentkező felület takarja az appot – FELHASZNÁLÓNÉVVEL és
 // jelszóval lehet belépni (a fiókokat a Firebase-konzolban kell
 // létrehozni, lásd INDULAS_TEENDOK.md).
 //
@@ -11,6 +11,43 @@
 // tableten csak EGYSZER kell bejelentkezni – újraindítás és
 // frissítés után is bejelentkezve marad, amíg ki nem jelentkezel.
 // ============================================================
+
+// ============================================================
+// FELHASZNÁLÓNÉV → E-MAIL CÍM
+// ============================================================
+// A Firebase bejelentkezéshez mindig e-mail cím kell, a dolgozók
+// viszont csak egy egyszerű felhasználónevet írnak be (pl. "penztar").
+// A hiányzó részt itt tesszük hozzá automatikusan, a háttérben:
+//     "penztar"  →  "penztar@foodtruck.local"
+//
+// Ez a végződés SEHOL nem jelenik meg a képernyőn, és nem is kell
+// működő postafióknak lennie – csak a Firebase belső azonosítója.
+// A fiókokat a Firebase-konzolban ILYEN formában kell létrehozni
+// (lásd INDULAS_TEENDOK.md, 1. lépés).
+//
+// FIGYELEM: ha ezt a végződést megváltoztatod, a MÁR LÉTREHOZOTT
+// fiókokkal nem lehet többé belépni – akkor a konzolban is át kell
+// nevezni őket.
+const LOGIN_EMAIL_DOMAIN = "foodtruck.local";
+
+// Csak ezek a karakterek engedettek a felhasználónévben: az ékezetes
+// betűk és a szóköz érvénytelen e-mail címet adnának, ezért inkább
+// előre, érthető üzenettel szólunk (a Firebase hibakódja helyett).
+const USERNAME_PATTERN = /^[a-z0-9._-]+$/;
+
+function usernameToEmail(username) {
+    const clean = username.trim().toLowerCase();
+    // Ha valaki mégis a teljes címet írja be (pl. régi beidegződésből),
+    // azt is elfogadjuk – nem kényszerítjük rá a végződést mégegyszer.
+    return clean.indexOf("@") !== -1 ? clean : clean + "@" + LOGIN_EMAIL_DOMAIN;
+}
+
+// A megjelenítéshez a végződést levágjuk: a Beállításokban a dolgozó
+// a saját felhasználónevét lássa, ne a technikai e-mail címet.
+function emailToUsername(email) {
+    if (!email) return "–";
+    return email.replace("@" + LOGIN_EMAIL_DOMAIN, "");
+}
 
 // A bejelentkező felület felépítése (egyszer, az oldal betöltésekor).
 // A felület csak statikus, előre megírt szöveget tartalmaz – felhasználói
@@ -25,9 +62,9 @@
     overlay.innerHTML = `
         <form class="login-card" id="loginForm">
             <h2>${connIcon("lock", 22)} Bejelentkezés</h2>
-            <p class="login-sub">A pénztár és a konyha felülete csak a dolgozók számára érhető el. Add meg a kapott e-mail címet és jelszót!</p>
-            <label for="loginEmail">E-mail cím</label>
-            <input type="email" id="loginEmail" autocomplete="username" inputmode="email" required />
+            <p class="login-sub">A pénztár és a konyha felülete csak a dolgozók számára érhető el. Add meg a kapott felhasználónevet és jelszót!</p>
+            <label for="loginUsername">Felhasználónév</label>
+            <input type="text" id="loginUsername" autocomplete="username" autocapitalize="none" spellcheck="false" required />
             <label for="loginPassword">Jelszó</label>
             <input type="password" id="loginPassword" autocomplete="current-password" required />
             <div class="login-error" id="loginError"></div>
@@ -58,20 +95,20 @@ function loginErrorMessage(code) {
 
     switch (code) {
         case "auth/invalid-email":
-            return "Az e-mail cím formátuma hibás. Ellenőrizd, majd próbáld újra!";
+            return "A felhasználónév formátuma hibás. Ellenőrizd, majd próbáld újra!";
         case "auth/user-disabled":
             return "Ez a fiók le van tiltva. A Firebase-konzolban lehet újra engedélyezni.";
         case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-credential":
         case "auth/invalid-login-credentials":
-            return "Hibás e-mail cím vagy jelszó.";
+            return "Hibás felhasználónév vagy jelszó.";
         case "auth/too-many-requests":
             return "Túl sok sikertelen próbálkozás. Várj néhány percet, majd próbáld újra!";
         case "auth/network-request-failed":
             return "Nincs internetkapcsolat. Ellenőrizd a Wi-Fi-t, majd próbáld újra!";
         case "auth/operation-not-allowed":
-            return "Az e-mail/jelszavas bejelentkezés még nincs engedélyezve a Firebase-konzolban (lásd INDULAS_TEENDOK.md, 1. lépés).";
+            return "A jelszavas bejelentkezés még nincs engedélyezve a Firebase-konzolban (lásd INDULAS_TEENDOK.md, 1. lépés).";
         default:
             return "Sikertelen bejelentkezés. Hibakód: " + code;
     }
@@ -95,14 +132,25 @@ function clearLoginError() {
 document.getElementById("loginForm").addEventListener("submit", (event) => {
     event.preventDefault();  // ne töltse újra az oldalt
 
-    const email = document.getElementById("loginEmail").value.trim();
+    const username = document.getElementById("loginUsername").value.trim();
     const password = document.getElementById("loginPassword").value;
     const submitBtn = document.getElementById("loginSubmitBtn");
 
-    if (!email || !password) {
-        showLoginError("Add meg az e-mail címet és a jelszót is!");
+    if (!username || !password) {
+        showLoginError("Add meg a felhasználónevet és a jelszót is!");
         return;
     }
+
+    // A felhasználónévben csak angol kisbetű, szám, pont, kötőjel és
+    // aláhúzás lehet (ékezet/szóköz nem) – erre előre figyelmeztetünk.
+    // A teljes e-mail címet beíró felhasználót nem korlátozzuk.
+    if (username.indexOf("@") === -1 && !USERNAME_PATTERN.test(username.toLowerCase())) {
+        showLoginError("A felhasználónév csak ékezet nélküli betűt, számot, pontot, kötőjelet vagy aláhúzást tartalmazhat.");
+        return;
+    }
+
+    // A Firebase e-mail címet vár – a felhasználónevet itt egészítjük ki
+    const email = usernameToEmail(username);
 
     clearLoginError();
     submitBtn.disabled = true;
@@ -137,10 +185,11 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 
     // A Beállításokban lévő fiók-jelző frissítése (csak a pénztár
-    // oldalon van ilyen elem; a konyhán ez a sor nem csinál semmit)
+    // oldalon van ilyen elem; a konyhán ez a sor nem csinál semmit).
+    // A technikai végződést levágjuk – a dolgozó a felhasználónevét lássa.
     const emailEl = document.getElementById("accountEmail");
     if (emailEl) {
-        emailEl.textContent = user ? user.email : "–";
+        emailEl.textContent = user ? emailToUsername(user.email) : "–";
     }
 });
 
