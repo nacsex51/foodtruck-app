@@ -1011,17 +1011,24 @@ magassága kicsi (pl. telefon oldalra fordítva ~375px), így a modal
 teteje/alja lelógott a képernyőről, a fix részek – téma-váltó, Fiók,
 **Bezárás gomb** – pedig elérhetetlenné váltak.
 
-Megoldás (`index.css`): új `@media (max-height: 600px)` szabály. Fekvő
-nézetben sok a vízszintes hely, kevés a függőleges, ezért a modal
-**teljes szélességű, teljes képernyős** (`max-width:none; height:100%;
-border-radius:0`), a tartalma pedig **több oszlopba folyik**
-(`column-width:15rem`), így egyszerre sokkal több beállítás látszik,
-és jellemzően **egyáltalán nem kell görgetni**. A cím és a Bezárás gomb
-a teljes szélességet átfogja (`column-span:all`), a szekciók nem
-törnek ketté oszlophatáron (`break-inside:avoid`,
-`settings-section-title { break-after:avoid }`). Ha mégis hosszú a lista,
-a modal egészében görgethető (`overflow-y:auto`). Álló nézet és a
-tabletek (magas képernyő) változatlanok.
+Megoldás (`index.css`): új `@media (max-height: 600px)` szabály (csak a
+`#settingsModal` és `#statsModal` tartalmas ablakokra). Fekvő nézetben sok
+a vízszintes hely, kevés a függőleges, ezért a modal **teljes szélességű,
+teljes képernyős** (`max-width:none; border-radius:0`), a tartalma pedig
+`display:block` mellett **több oszlopba folyik** (`column-width:13rem` →
+jellemzően 3 oszlop), így egyszerre sokkal több beállítás látszik, alig kell
+görgetni. A cím és a Bezárás gomb a teljes szélességet átfogja
+(`column-span:all`), a szekciók nem törnek ketté oszlophatáron
+(`break-inside:avoid`, `settings-section-title { break-after:avoid }`).
+
+**FONTOS (élesítés közben, képernyőképes teszttel talált hiba):** ha a
+modalnak fix magassága van (`height/max-height:100%`), a több oszlop nem
+függőlegesen, hanem **vízszintesen** csordul túl – az étlap-lista a
+képernyőn kívülre került. Ezért a modalnak **nincs magasság-korlátja**
+(`min-height:100%; max-height:none; overflow:visible`), és inkább az
+**overlay** görget függőlegesen (`overflow-y:auto; align-items:flex-start`),
+ha a tartalom magasabb a képernyőnél. Álló nézet és a tabletek (magas
+képernyő) változatlanok.
 
 **2. Bejelentkezés magától belépett jelszó nélkül (iPhone-on tesztelve).**
 A Firebase alapból **tartósan** (LOCAL persistence) megjegyezte a belépést
