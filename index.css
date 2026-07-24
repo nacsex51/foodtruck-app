@@ -813,91 +813,12 @@ header h1 {
     background: var(--text-faint);
 }
 
-/* ============================================================
-   FEKVŐ (elforgatott) / ALACSONY KÉPERNYŐ – pl. telefon oldalra
-   fordítva. Ilyenkor a képernyő magassága kicsi, de a szélessége nagy.
-
-   A középre igazított, 88vh-s, egyoszlopos modal itt egy keskeny
-   "sávban" jelenne meg, a tartalma egymás alá torlódna, és sokat
-   kellene görgetni – a fix részek (téma-váltó, Fiók, Bezárás) akár
-   le is lógnának a képernyőről.
-
-   Megoldás: alacsony képernyőn a modal legyen TELJES KÉPERNYŐS (a
-   teljes szélességet kitölti), a tartalma pedig TÖBB OSZLOPBA folyjon,
-   így a széles fekvő képernyőn egyszerre sokkal több beállítás látszik,
-   és alig – vagy egyáltalán nem – kell görgetni.
-============================================================ */
-@media (max-height: 600px) {
-    /* Csak a TARTALMAS modalok (Beállítások, Statisztika) kapnak teljes
-       képernyős, több oszlopos elrendezést – a rövid megerősítő ablak
-       marad a képernyő közepén, kis dobozként. */
-
-    /* Az overlay felülről igazít és FÜGGŐLEGESEN görget, ha a tartalom
-       magasabb a képernyőnél. FONTOS: így a több oszlop NEM vízszintesen
-       csordul túl (a képernyőn kívülre), hanem a modal magasabb lesz, és
-       az overlay görgethető. */
-    #settingsModal.modal-overlay,
-    #statsModal.modal-overlay {
-        align-items: flex-start;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    #settingsModal .modal,
-    #statsModal .modal {
-        width: 100%;
-        max-width: none;        /* teljes szélesség – ne legyen keskeny sáv */
-        min-height: 100%;       /* legalább teljes képernyő magas (kitölti) */
-        max-height: none;       /* NINCS magasság-korlát → nincs vízszintes túlcsordulás */
-        height: auto;
-        border-radius: 0;       /* teljes képernyős szélek */
-        overflow: visible;
-        padding: 16px 22px;
-
-        /* FONTOS: a több oszlopos elrendezés (column-*) csak BLOKK
-           elemen működik, a modal alapból flex – ezért itt block. */
-        display: block;
-
-        /* A tartalom több oszlopba folyik (a szélességtől függően jellemzően
-           2–3 oszlop), hogy egyszerre minél több látszódjon, alig – vagy
-           egyáltalán nem – kell görgetni. */
-        column-width: 13rem;
-        column-gap: 26px;
-    }
-
-    /* A cím és a Bezárás gomb a teljes szélességet fogja át (ne csak egy
-       oszlopot), így keretezi a több oszlopos tartalmat. */
-    #settingsModal .modal > h2,
-    #settingsModal .modal > .modal-close,
-    #statsModal .modal > h2,
-    #statsModal .modal > .modal-close {
-        column-span: all;
-    }
-    #settingsModal .modal > h2,
-    #statsModal .modal > h2 { margin-bottom: 12px; }
-
-    /* Egy szekció címe ne szakadjon el a tartalmától, és egyetlen blokk
-       se törjön ketté két oszlop határán. */
-    #settingsModal .settings-section-title {
-        break-after: avoid;
-        margin-top: 10px;
-    }
-    #settingsModal .theme-toggle,
-    #settingsModal .conn-settings,
-    #settingsModal .add-item-form,
-    #settingsModal .login-links,
-    #menuManageList > *,
-    #statsContent > * {
-        break-inside: avoid;
-    }
-
-    /* A listák ne szoruljanak külön görgetődobozba: a tartalmuk az
-       oszlopokba folyik. */
-    #menuManageList,
-    #statsContent {
-        overflow-y: visible;
-    }
-}
+/* Megjegyzés: a beállítások/statisztika modalnak NINCS külön "fekvő"
+   (széles, több oszlopos) nézete – fekvőben is ugyanúgy néz ki, mint
+   állóban: középre igazított, görgethető ablak (lásd a fenti `.modal`
+   szabályt, `overflow-y: auto`). Korábban itt egy `@media (max-height:
+   600px)` teljes képernyős, több oszlopos elrendezés volt, ezt a
+   felhasználó kérésére eltávolítottuk. */
 
 .modal h2 {
     display: flex;

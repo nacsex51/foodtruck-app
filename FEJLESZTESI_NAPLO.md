@@ -1097,3 +1097,17 @@ elérhető, mindkét mező `required`, a `?v=2` fájlok 200-asak, konzolhiba nin
 (a `favicon.ico` 404 régóta fennáll, ártalmatlan).
 
 **Érintett fájlok:** `index.css`, `auth.js`, `kitchen.css`, `index.html`, `kitchen.html`.
+
+---
+
+### 2026-07-24 – A beállítások „széles" (fekvő, több oszlopos) nézete eltávolítva
+
+Felhasználói kérésre a beállítások/statisztika modalnak megszűnt a külön fekvő
+(teljes képernyős, több oszlopos) elrendezése: a `@media (max-height: 600px)`
+blokk törölve az `index.css`-ből. Fekvőben ezután ugyanúgy néz ki, mint állóban
+– középre igazított, `max-width: 400px`, `max-height: 88vh`, **görgethető**
+ablak (az alap `.modal` szabály `overflow-y: auto`-ja miatt minden elem
+elérhető). Teszt (812×375): a modal középen, 400px széles, görgethető, nincs
+több oszlop és nincs vízszintes túlcsordulás.
+
+**Érintett fájlok:** `index.css`.
