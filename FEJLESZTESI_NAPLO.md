@@ -997,3 +997,54 @@ működésének bizonyítéka, élesben ez sikeres belépés lesz.
 Konzolhiba egyik oldalon sincs.
 
 **Érintett fájlok:** `auth.js`, `INDULAS_TEENDOK.md`.
+
+---
+
+### 2026-07-24 – Beállítások menü fekvő nézetben görgethető + bejelentkezés csak app-nyitásig érvényes
+
+Két, teszteléskor talált probléma javítása.
+
+**1. Beállítások menü elforgatott (fekvő) nézetben – nem lehetett görgetni.**
+A modal `max-height: 88vh` méretű, középre igazított, és csak a belső
+étlap-lista (`#menuManageList`) görgethető. Fekvő nézetben a képernyő
+magassága kicsi (pl. telefon oldalra fordítva ~375px), így a modal
+teteje/alja lelógott a képernyőről, a fix részek – téma-váltó, Fiók,
+**Bezárás gomb** – pedig elérhetetlenné váltak.
+
+Megoldás (`index.css`): új `@media (max-height: 600px)` szabály. Fekvő
+nézetben sok a vízszintes hely, kevés a függőleges, ezért a modal
+**teljes szélességű, teljes képernyős** (`max-width:none; height:100%;
+border-radius:0`), a tartalma pedig **több oszlopba folyik**
+(`column-width:15rem`), így egyszerre sokkal több beállítás látszik,
+és jellemzően **egyáltalán nem kell görgetni**. A cím és a Bezárás gomb
+a teljes szélességet átfogja (`column-span:all`), a szekciók nem
+törnek ketté oszlophatáron (`break-inside:avoid`,
+`settings-section-title { break-after:avoid }`). Ha mégis hosszú a lista,
+a modal egészében görgethető (`overflow-y:auto`). Álló nézet és a
+tabletek (magas képernyő) változatlanok.
+
+**2. Bejelentkezés magától belépett jelszó nélkül (iPhone-on tesztelve).**
+A Firebase alapból **tartósan** (LOCAL persistence) megjegyezte a belépést
+az eszközön, ezért megnyitáskor jelszó nélkül belépett. A felhasználó
+kérése: mindig kérje a jelszót, ne lehessen jelszó nélkül belépni.
+
+Megoldás (`auth.js`): a belépés élettartama `SESSION`-re állítva
+(`firebase.auth().setPersistence(...Persistence.SESSION)`, a belépés
+elküldése előtt). Így: **oldalfrissítés** után bejelentkezve maradsz
+(napközben a tableten nem zavar), de az **app teljes bezárása** után
+vagy **másik eszközön** újra kéri a felhasználónevet és jelszót. A belépő
+mezők amúgy is `required`-ek – üres mezővel nem lehet belépni.
+(Választott mód: „amíg nyitva van" – nem a legszigorúbb „minden
+frissítéskor".)
+
+**Tesztelés:** preview szerveren, **DB-írás nélkül**. Fekvő 812×375
+méreten a modal a teljes szélességet kitölti (812px), több oszlopos, és
+görgetés nélkül minden elfér (`scrollHeight == clientHeight`), a Bezárás
+gomb is látszik. Álló 390×844 méreten változatlan: középre igazított,
+`max-width:400px`, egyoszlopos. A bejelentkezésnél újratöltés után a
+belépő overlay megjelenik és eltakarja az appot; a felhasználónév- és
+jelszó-mező `required`; a `setPersistence` hiba nélkül lefutott,
+konzolhiba nincs. (A belépés localhostról az API-kulcs referer-
+korlátozása miatt szándékosan tiltott – élesben működik.)
+
+**Érintett fájlok:** `index.css`, `auth.js`.

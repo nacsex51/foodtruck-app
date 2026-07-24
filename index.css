@@ -792,6 +792,72 @@ header h1 {
     min-height: 0;
 }
 
+/* ============================================================
+   FEKVŐ (elforgatott) / ALACSONY KÉPERNYŐ – pl. telefon oldalra
+   fordítva. Ilyenkor a képernyő magassága kicsi, de a szélessége nagy.
+
+   A középre igazított, 88vh-s, egyoszlopos modal itt egy keskeny
+   "sávban" jelenne meg, a tartalma egymás alá torlódna, és sokat
+   kellene görgetni – a fix részek (téma-váltó, Fiók, Bezárás) akár
+   le is lógnának a képernyőről.
+
+   Megoldás: alacsony képernyőn a modal legyen TELJES KÉPERNYŐS (a
+   teljes szélességet kitölti), a tartalma pedig TÖBB OSZLOPBA folyjon,
+   így a széles fekvő képernyőn egyszerre sokkal több beállítás látszik,
+   és alig – vagy egyáltalán nem – kell görgetni.
+============================================================ */
+@media (max-height: 600px) {
+    .modal-overlay {
+        align-items: stretch;   /* a modal töltse ki a teljes magasságot */
+    }
+
+    .modal {
+        width: 100%;
+        max-width: none;        /* NE legyen keskeny sáv – teljes szélesség */
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;       /* teljes képernyős szélek */
+        display: block;
+        overflow-y: auto;       /* ha mégis hosszú, az egész görgethető */
+        -webkit-overflow-scrolling: touch;
+        padding: 16px 22px;
+
+        /* A tartalom több oszlopba rendeződik (a szélességtől függően
+           2–3 oszlop), hogy minél több férjen el egyszerre a képernyőn. */
+        column-width: 15rem;
+        column-gap: 26px;
+    }
+
+    /* A cím és a Bezárás gomb a teljes szélességet fogja át (ne csak
+       egy oszlopot), így keretezi a több-oszlopos tartalmat. */
+    .modal > h2,
+    .modal > .modal-close {
+        column-span: all;
+    }
+    .modal > h2 { margin-bottom: 12px; }
+
+    /* Egy szekció címe ne szakadjon el a hozzá tartozó tartalomtól,
+       és egyetlen blokk se törjön ketté két oszlop határán. */
+    .modal .settings-section-title {
+        break-after: avoid;
+        margin-top: 10px;
+    }
+    .modal .theme-toggle,
+    .modal .conn-settings,
+    .modal .add-item-form,
+    .modal .login-links,
+    #menuManageList > * {
+        break-inside: avoid;
+    }
+
+    /* Rövid képernyőn ne legyen külön belső görgetősáv a listákon:
+       a tartalom az oszlopokba folyik, nem egy szűk dobozba szorul. */
+    #menuManageList,
+    #statsContent {
+        overflow-y: visible;
+    }
+}
+
 .modal h2 {
     display: flex;
     align-items: center;

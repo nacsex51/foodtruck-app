@@ -78,6 +78,28 @@ function emailToUsername(email) {
 })();
 
 // ============================================================
+// BEJELENTKEZÉS ÉLETTARTAMA – csak amíg az app nyitva van
+// ============================================================
+// Korábban a Firebase TARTÓSAN megjegyezte a belépést az eszközön,
+// ezért az app megnyitáskor jelszó nélkül, magától belépett (ezt
+// tapasztaltad iPhone-on). Biztonságosabb, ha a belépés csak addig
+// él, amíg az app (böngészőfül / PWA) nyitva van:
+//   - oldalfrissítés után bejelentkezve maradsz (napközben nem zavar),
+//   - az app teljes bezárása után VAGY másik eszközön viszont a
+//     belépő képernyő jelenik meg, és ÚJRA be kell írni a
+//     felhasználónevet és a jelszót – jelszó nélkül nem lehet belépni.
+//
+// (SESSION = a böngésző sessionStorage-ában tárol: fül bezárásakor törlődik.)
+// Ezt a belépés ELKÜLDÉSE ELŐTT kell beállítani, ezért van itt, legfelül.
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+    .catch((err) => {
+        // Ha a böngésző valamiért nem támogatná a session-tárolást, a
+        // belépés ettől még működik – csak a "bezárásig" viselkedés nem
+        // garantált. Nem állítjuk meg miatta az appot.
+        console.warn("A bejelentkezés élettartamát nem sikerült beállítani:", err);
+    });
+
+// ============================================================
 // HIBAÜZENETEK MAGYARUL
 // A Firebase angol hibakódjait fordítjuk érthető üzenetre.
 // ============================================================
