@@ -78,24 +78,28 @@ function emailToUsername(email) {
 })();
 
 // ============================================================
-// BEJELENTKEZÉS ÉLETTARTAMA – csak amíg az app nyitva van
+// BEJELENTKEZÉS ÉLETTARTAMA – az eszköz SEHOL nem jegyzi meg
 // ============================================================
-// Korábban a Firebase TARTÓSAN megjegyezte a belépést az eszközön,
-// ezért az app megnyitáskor jelszó nélkül, magától belépett (ezt
-// tapasztaltad iPhone-on). Biztonságosabb, ha a belépés csak addig
-// él, amíg az app (böngészőfül / PWA) nyitva van:
-//   - oldalfrissítés után bejelentkezve maradsz (napközben nem zavar),
-//   - az app teljes bezárása után VAGY másik eszközön viszont a
-//     belépő képernyő jelenik meg, és ÚJRA be kell írni a
-//     felhasználónevet és a jelszót – jelszó nélkül nem lehet belépni.
+// A Firebase alapból TARTÓSAN megjegyzi a belépést az eszközön, ezért
+// az app megnyitáskor jelszó nélkül, magától belépett (ezt tapasztaltad
+// iPhone-on). A kérés: MINDIG kérje a felhasználónevet és jelszót, ne
+// lehessen jelszó nélkül belépni.
 //
-// (SESSION = a böngésző sessionStorage-ában tárol: fül bezárásakor törlődik.)
-// Ezt a belépés ELKÜLDÉSE ELŐTT kell beállítani, ezért van itt, legfelül.
-firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+// Ezért a legszigorúbb módot használjuk: NONE (in-memory) – a belépés
+// SEHOL nem tárolódik (sem lemezen, sem a fül session-tárában). Így:
+//   - amíg az app nyitva van, bejelentkezve maradsz és zavartalanul
+//     dolgozhatsz (nincs újbóli jelszókérés kattintás közben),
+//   - de MINDEN megnyitáskor és oldalfrissítéskor a belépő képernyő
+//     jelenik meg, és újra be kell írni a felhasználónevet + jelszót.
+//
+// FONTOS: ezt a belépés ELKÜLDÉSE ELŐTT kell beállítani, ezért van itt,
+// legfelül. (Az az eszköz, amelyen KORÁBBAN már tartósan bejelentkeztél
+// – pl. az iPhone –, a friss kód első betöltésekor még beléphet egyszer;
+// utána a NONE miatt már mindig jelszót fog kérni.)
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.NONE)
     .catch((err) => {
-        // Ha a böngésző valamiért nem támogatná a session-tárolást, a
-        // belépés ettől még működik – csak a "bezárásig" viselkedés nem
-        // garantált. Nem állítjuk meg miatta az appot.
+        // Ha a beállítás valamiért nem sikerülne, a belépés ettől még
+        // működik – nem állítjuk meg miatta az appot.
         console.warn("A bejelentkezés élettartamát nem sikerült beállítani:", err);
     });
 

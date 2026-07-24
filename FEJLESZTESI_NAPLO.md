@@ -1055,3 +1055,45 @@ konzolhiba nincs. (A belépés localhostról az API-kulcs referer-
 korlátozása miatt szándékosan tiltott – élesben működik.)
 
 **Érintett fájlok:** `index.css`, `auth.js`.
+
+---
+
+### 2026-07-24 – Álló nézet elérhetőség, szigorúbb belépés (NONE), egységes görgetősáv, cache-busting
+
+Manuális teszt (iPhone) alapján talált három probléma.
+
+**1. Álló nézetben a beállítások menü elemei elérhetetlenek voltak.**
+A modal korábban flex-oszlop volt, és CSAK a belső étlap-lista görgött; ha a
+fix részek (téma, Adatkapcsolat, Fiók, Étlap-űrlap) magasabbak voltak a
+képernyőnél, a lenti gombok (pl. Bezárás) elérhetetlenné váltak.
+Megoldás (`index.css`): az **egész modal görgethető** (`overflow-y:auto`, a
+flex-oszlopos belső görgetés megszüntetve, `#menuManageList/#statsContent →
+overflow-y:visible`), így álló nézetben MINDEN elem elérhető – ha nem fér ki,
+legalább végig lehet görgetni.
+
+**2. iPhone-on továbbra is magától belépett, jelszó nélkül.**
+Két ok: (a) a korábbi `SESSION` sem volt elég szigorú; (b) valószínűleg a régi
+`auth.js` maradt a böngésző gyorsítótárában (nincs service worker, a
+`netlify.toml` nem állít cache-fejlécet). Megoldás:
+- `auth.js`: a persistence `SESSION` → **`NONE`** (in-memory) – a belépés SEHOL
+  nem tárolódik, így MINDEN megnyitáskor/oldalfrissítéskor kell a
+  felhasználónév + jelszó; jelszó nélkül nem lehet belépni. (Az eszköz, ahol
+  korábban tartósan beléptél, a friss kód első betöltésekor még beléphet
+  egyszer, utána már mindig kér jelszót.)
+- **Cache-busting:** `index.html`/`kitchen.html` a módosított `auth.js`,
+  `index.css`, `kitchen.css` hivatkozásokhoz `?v=2` verziót kapott, hogy az
+  eszközök biztosan a friss kódot töltsék.
+
+**3. Egységes, témába illő görgetősáv (`/ui-ux-pro-max`).**
+`index.css` és `kitchen.css`: globális, a dizájn tokenekből (`--border-strong`,
+`--text-faint`) színeződő görgetősáv (`scrollbar-color` + `::-webkit-scrollbar`),
+így a görgő „csúszkája" is a felülethez illik, sötét és világos módban is,
+stílustörés nélkül.
+
+**Tesztelés:** preview szerveren, **DB-írás nélkül**. Álló 390×720: az egész
+modal görgethető, a Bezárás gomb görgetés után elérhető, a görgetősáv a
+token-színt kapja, nincs vízszintes túlcsordulás. Belépés: `Persistence.NONE`
+elérhető, mindkét mező `required`, a `?v=2` fájlok 200-asak, konzolhiba nincs
+(a `favicon.ico` 404 régóta fennáll, ártalmatlan).
+
+**Érintett fájlok:** `index.css`, `auth.js`, `kitchen.css`, `index.html`, `kitchen.html`.

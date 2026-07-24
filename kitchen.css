@@ -374,3 +374,29 @@ header h1 {
   from { transform: translateY(-100%); }
   to   { transform: translateY(0); }
 }
+
+/* ============================================================
+   GÖRGETŐSÁV – témába illő, EGYSÉGES megjelenés (a Pénztár oldallal
+   azonos). A "csúszka" (thumb) és a sín a dizájn tokenekből színeződik,
+   így sötét és világos módban is illik a felülethez.
+============================================================ */
+* {
+    scrollbar-width: thin;                               /* Firefox */
+    scrollbar-color: var(--border-strong) transparent;  /* csúszka / sín */
+}
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+}

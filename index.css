@@ -771,25 +771,46 @@ header h1 {
     max-width: 400px;
     border: 1px solid var(--border-strong);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    /* Sosem lóghat ki a képernyőből: hosszú étlapnál a belső lista
-       (#menuManageList / #statsContent) görgethető, a Bezárás gomb
-       így mindig látható és elérhető marad. */
+    /* Az EGÉSZ modal görgethető: álló nézetben is MINDEN elem elérhető
+       marad (téma-váltó, Fiók, étlap-űrlap, Bezárás). Ha nem fér ki a
+       képernyőre, legalább végig lehet görgetni – semmi nem "ragad be".
+       (Korábban csak a belső lista görgött; ha a fix részek magasabbak
+       voltak a képernyőnél, a lenti gombok elérhetetlenné váltak.) */
     max-height: 88vh;
-    display: flex;
-    flex-direction: column;
+    overflow-y: auto;
 }
 
-/* A modal elemei (cím, form, gombok) ne zsugorodjanak össze... */
-.modal > * {
-    flex-shrink: 0;
-}
-
-/* ...csak a két hosszúra nyúlható lista görgetődjön */
+/* A listák NE kapjanak külön, egymásba ágyazott görgetősávot – az egész
+   modal görgüljön egyben, egységesen. */
 #menuManageList,
 #statsContent {
-    flex-shrink: 1;
-    overflow-y: auto;
-    min-height: 0;
+    overflow-y: visible;
+}
+
+/* ============================================================
+   GÖRGETŐSÁV – témába illő, EGYSÉGES megjelenés az egész appban.
+   A "csúszka" (thumb) és a sín a dizájn tokenekből színeződik, így
+   sötét és világos módban is illik a felülethez, és nincs stílustörés.
+============================================================ */
+* {
+    scrollbar-width: thin;                               /* Firefox */
+    scrollbar-color: var(--border-strong) transparent;  /* csúszka / sín */
+}
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;      /* kis "levegő" a csúszka körül */
+    background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
 }
 
 /* ============================================================
